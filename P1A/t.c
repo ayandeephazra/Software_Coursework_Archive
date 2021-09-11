@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
         // command common to all
         command = token;
         printf("\n");
-        printf("token");
+        printf("token\n");
         printf(command);
         // key
         if (token != NULL)

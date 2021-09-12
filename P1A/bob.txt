@@ -1,3 +1,2 @@
-30,remzi
-40,bob
-50,jim
+53,william
+65,pince

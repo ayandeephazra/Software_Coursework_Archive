@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
-#define HASHSIZE 200
 
 struct Pair
 {
@@ -30,24 +28,41 @@ void NewList(struct Pair p, Node *pp)
 }
 void ViewElement(struct Pair p)
 {
-    printf("%s %s\n", p.key, p.value);
+    printf("%s,%s\n", p.key, p.value);
 }
 
 void ViewList(Node node)
 {
     while (node != NULL)
     {
-        printf("%s %s\n", (node->pair).key, (node->pair).value);
+        printf("%s,", (node->pair).key);
+        printf("%s\n", (node->pair).value);
+        node = node->next;
+    }
+}
+void find(Node node, char key[])
+{
+    while (node != NULL)
+    {
+        if (strcmp((node->pair).key, key) == 0)
+        {
+            printf("%s,", (node->pair).key);
+            printf("%s\n", (node->pair).value);
+        }
         node = node->next;
     }
 }
 
-void add(Node n, Node curr){
+void add(Node n, Node curr)
+{
     while (curr != NULL)
     {
-        if(curr->next == NULL){
-            curr = curr->next;
-            curr = n;
+        if (curr->next == NULL)
+        {
+            curr->next = n;
+            //curr->pair = n->pair;
+            //curr->next = NULL;
+            n->next = NULL;
         }
         curr = curr->next;
     }
@@ -68,8 +83,22 @@ void LoadTXT(Node *pp)
 
     while (fgets(buffer, sizeof(struct Pair), f))
     {
-        if (sscanf(buffer, "%s,%s", p.key, &p.value) > 0)
+        char temp[200], key[100], value[100];
+        if (sscanf(buffer, "%s", temp) > 0)
         {
+            int tokenNum = 0;
+            char *token = strtok(temp, ",");
+            while (token != NULL)
+            {
+                if (tokenNum == 0)
+                    strcpy(key, token);
+                if (tokenNum == 1)
+                    strcpy(value, token);
+                token = strtok(NULL, ",");
+                tokenNum++;
+            }
+            strcpy(p.key, key);
+            strcpy(p.value, value);
             NewList(p, pp);
         }
     }
@@ -80,12 +109,9 @@ void LoadTXT(Node *pp)
 int main(int argc, char *argv[])
 {
     struct Node *start = NULL;
-    //LoadTXT(&start);
-    ViewList(start);
-
+    LoadTXT(&start);
+    //ViewList(start);
     FILE *f = fopen("bob.txt", "a+");
-    if (f == NULL)
-        exit(EXIT_FAILURE);
     char command[100], key[100], value[100], token2[100];
 
     for (int i = 1; i < argc; i++)
@@ -124,67 +150,41 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        printf("command:%s\n", command);
-        printf("key:%s\n", key);
-        printf("value:%s\n", value);
-
+        //printf("command:%s\n", command);
+        //printf("key:%s\n", key);
+        //printf("value:%s\n", value);
+        // PUT COMMAND
         if (tokenNum == 3)
         {
-             printf("value:%i", tokenNum);
-            //printf("bruh%s%s", key, value);
-            //fprintf(f, "%s,%s\n", key, value);
-            //printf("bruh");
+            struct Pair p;
+            strcpy(p.key, key);
+            strcpy(p.value, value);
             Node temp;
+
+            temp = (Node)malloc(sizeof(struct Node));
+
+            temp->pair = p;
             temp->next = NULL;
-            strcpy(temp->pair.key, key);
-            strcpy(temp->pair.value, value);
 
-            //add(temp, start);
-            ViewList(start);
-            printf("wtf");
+            add(temp, start);
+            //ViewList(start);
         }
-
+        // GET COMMAND
+        if(tokenNum == 2  && strcmpi(command, "g") == 0){
+            find(start, key);
+        }
         // TODO CHANGE DATA STRCUTURE HERE AS WELL
         if (tokenNum == 1 && strcmpi(command, "c") == 0)
         {
             fclose(f);
             f = fopen("bob.txt", "w");
-            if (f == NULL)
-                exit(EXIT_FAILURE);
             fclose(f);
             f = fopen("bob.txt", "a+");
-            if (f == NULL)
-                exit(EXIT_FAILURE);
-
-           // (start->pair).key = NULL;
-           // (start->pair).value = NULL;
-            strcpy(start->pair.key, NULL);
-            strcpy(start->pair.value, NULL);
-            start->next = NULL;
-
-            printf("ggggg");
-            ViewList(start);
         }
     }
+
+    printf(start->pair.key);
 
     fclose(f);
     return 0;
 }
-/*
-if(sscanf(buffer, "%s", temp)>0){
-           int i = 0;
-           while(temp[i]!='\0' && temp[i]!=','){
-               strncat(key, &temp[i], 1);
-               i++;
-           }
-           while(temp[i]!='\0'){
-               strncat(value, &temp[i], 1);
-               i++;
-           }
-           printf("here%s", key);
-           strcpy(p.key, key);
-           strcpy(p.value, value);
-           NewList(p, pp);
-       }
-
-       */

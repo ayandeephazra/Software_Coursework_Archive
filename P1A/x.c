@@ -53,7 +53,7 @@ void add(Node n, Node curr){
     }
 }
 
-void LoadTXT(Node *pp)
+void loadTXT(Node *pp)
 {
     FILE *f;
     struct Pair p;

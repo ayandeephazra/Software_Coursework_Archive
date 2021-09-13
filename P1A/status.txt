@@ -1,0 +1,14 @@
+y has done all command except for d,key. some of the commands do not update the databse values in the end. 
+
+z is very buggy, delete does not work, clear does not work, new file not made
+z does not put elements onto empty file, but can put elements onto used file
+
+a is a dumpster fire
+
+b is just y
+
+./b p,45,haley p,35,martin p,30,arbitha p,25,hansen p,195,mark
+
+./b p,46,liam p,44,sanders p,59,leonard p,21,merc 
+
+b completely does everything in p,g,c,a just d is left

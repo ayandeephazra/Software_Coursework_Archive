@@ -169,26 +169,40 @@ int main(int argc, char *argv[])
             temp->next = NULL;
 
             add(temp, start);
-            fprintf(f, "%s,%s\n", key, value);
+            //fprintf(f, "%s,%s\n", key, value);
         }
         // GET COMMAND
-        if(tokenNum == 2  && strcmpi(command, "g") == 0){
+        if (tokenNum == 2 && strcmpi(command, "g") == 0)
+        {
             find(start, key);
         }
         // CLEAR COMMAND
         if (tokenNum == 1 && strcmpi(command, "c") == 0)
         {
-            fclose(f);
-            f = fopen("bob.txt", "w");
-            fclose(f);
-            f = fopen("bob.txt", "a+");
+            
+            FILE *temp = fopen("bob.txt", "w");
+            loadTXT(&start);
         }
-          // ALL COMMAND
+        // ALL COMMAND
         if (tokenNum == 1 && strcmpi(command, "a") == 0)
         {
             ViewList(start);
         }
+        fclose(f);
+        f = fopen("bob.txt", "w");
+   \
+        Node node = start;
+
+        while (node != NULL)
+        {
+            
+            fprintf(f, "%s,%s\n", (node->pair).key, (node->pair).value);
+            //fprintf("%s,", (node->pair).key);
+            // fprintf("%s\n", (node->pair).value);
+            node = node->next;
+        }
     }
+
     fclose(f);
     return 0;
 }

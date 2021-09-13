@@ -18,12 +18,9 @@ typedef TNode *Node;
 void NewList(struct Pair p, Node *pp)
 {
     Node temp;
-
     temp = (Node)malloc(sizeof(struct Node));
-
     temp->pair = p;
     temp->next = *pp;
-
     *pp = temp;
 }
 void ViewElement(struct Pair p)
@@ -35,8 +32,11 @@ void ViewList(Node node)
 {
     while (node != NULL)
     {
-        printf("%s,", (node->pair).key);
-        printf("%s\n", (node->pair).value);
+        if (strcmp(node->pair.key, "") != 0 && strcmp(node->pair.key, "") != 0)
+        {
+            printf("%s,", (node->pair).key);
+            printf("%s\n", (node->pair).value);
+        }
         node = node->next;
     }
 }
@@ -57,13 +57,17 @@ void find(Node node, char key[])
 
 void add(Node n, Node curr)
 {
+    if (curr == NULL || (strcmp((curr->pair).key, "") == 0 && strcmp((curr->pair).value, "") == 0))
+    {
+        curr->next = NULL;
+        curr->pair = n->pair;
+        return;
+    }
     while (curr != NULL)
     {
         if (curr->next == NULL)
         {
             curr->next = n;
-            //curr->pair = n->pair;
-            //curr->next = NULL;
             n->next = NULL;
         }
         curr = curr->next;
@@ -110,18 +114,17 @@ void loadTXT(Node *pp)
 }
 int main(int argc, char *argv[])
 {
+    // HEAD of linked list
     struct Node *start = NULL;
     loadTXT(&start);
-    //ViewList(start);
-    FILE *f = fopen("bob.txt", "a+");
     char command[100], key[100], value[100], token2[100];
 
     for (int i = 1; i < argc; i++)
     {
-        strcpy(command, "");
-        strcpy(key, "");
-        strcpy(value, "");
-        int tokenNum = 0;
+        strcpy(command, ""); // must set to empty string every iteration
+        strcpy(key, ""); // must set to empty string every iteration
+        strcpy(value, ""); // must set to empty string every iteration
+        int tokenNum = 0; // we have commands of 1,2 and 3 tokens so this is necessary
         char string[50];
         strcpy(string, argv[i]);
         // Extract the first token
@@ -155,6 +158,7 @@ int main(int argc, char *argv[])
         //printf("command:%s\n", command);
         //printf("key:%s\n", key);
         //printf("value:%s\n", value);
+
         // PUT COMMAND
         if (tokenNum == 3)
         {
@@ -169,25 +173,35 @@ int main(int argc, char *argv[])
             temp->next = NULL;
 
             add(temp, start);
-            fprintf(f, "%s,%s\n", key, value);
         }
         // GET COMMAND
-        if(tokenNum == 2  && strcmpi(command, "g") == 0){
+        if (tokenNum == 2 && strcmpi(command, "g") == 0)
+        {
             find(start, key);
         }
         // CLEAR COMMAND
         if (tokenNum == 1 && strcmpi(command, "c") == 0)
         {
-            fclose(f);
-            f = fopen("bob.txt", "w");
-            fclose(f);
-            f = fopen("bob.txt", "a+");
+            start->next = NULL;
+            strcpy(start->pair.key, "");
+            strcpy(start->pair.value, "");
+
+            FILE *fp = fopen("bob.txt", "w");
+            fclose(fp);
         }
-          // ALL COMMAND
+        // ALL COMMAND
         if (tokenNum == 1 && strcmpi(command, "a") == 0)
         {
             ViewList(start);
         }
+    }
+    FILE *f = fopen("bob.txt", "w");
+    Node node = start;
+    while (node != NULL)
+    {
+        //if (strcmp(node->pair.key, "") != 0 && strcmp(node->pair.key, "") != 0)
+        fprintf(f, "%s,%s\n", (node->pair).key, (node->pair).value);
+        node = node->next;
     }
     fclose(f);
     return 0;

@@ -72,6 +72,10 @@ void loadTXT(Node *pp)
         char temp[200], key[100], value[100];
         if (sscanf(buffer, "%s", temp) > 0)
         {
+            if (temp[0] == ',')
+            {
+                fprintf(f, " ");
+            }
             int tokenNum = 0;
             char *token = strtok(temp, ",");
             while (token != NULL)
@@ -94,20 +98,25 @@ void loadTXT(Node *pp)
 }
 void add(Node n, Node curr)
 {
-    loadTXT(&curr);
-    if ((curr == NULL) || (strcmp((curr->pair).key, "") == 0 && strcmp((curr->pair).value, "") == 0) || ((curr->pair).key == NULL && (curr->pair).value == NULL))
+    //loadTXT(&curr);
+    if ((curr == NULL))
     {
-        curr = (Node)malloc(sizeof(struct Node));
+        // || (strcmp((curr->pair).key, "") == 0 && strcmp((curr->pair).value, "") == 0) || ((curr->pair).key == NULL && (curr->pair).value == NULL)
 
-        curr->next = NULL;
-        strcpy((curr->pair).key, (n->pair).key);
-        strcpy((curr->pair).value, (n->pair).value);
-      //curr->pair = n->pair;
+        NewList(n->pair, &curr);
+
+        //printf((n->pair).key);
+
+        //curr = (Node)malloc(sizeof(struct Node));
+
+        //curr->next = NULL;
+        //strcpy((curr->pair).key, (n->pair).key);
+        //strcpy((curr->pair).value, (n->pair).value);
         return;
     }
     while (curr != NULL)
     {
-  
+
         if (curr->next == NULL)
         {
             curr->next = n;
@@ -167,6 +176,10 @@ int main(int argc, char *argv[])
         // PUT COMMAND
         if (tokenNum == 3)
         {
+            FILE *fp = fopen("bob.txt", "a");
+            //fprintf(fp, ",");
+            fclose(fp);
+            
             struct Pair p;
             strcpy(p.key, key);
             strcpy(p.value, value);
@@ -190,7 +203,6 @@ int main(int argc, char *argv[])
             start->next = NULL;
             strcpy(start->pair.key, "");
             strcpy(start->pair.value, "");
-            free(start);
 
             FILE *fp = fopen("bob.txt", "w");
             fclose(fp);

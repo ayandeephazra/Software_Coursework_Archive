@@ -18,9 +18,12 @@ typedef TNode *Node;
 void NewList(struct Pair p, Node *pp)
 {
     Node temp;
+
     temp = (Node)malloc(sizeof(struct Node));
+
     temp->pair = p;
     temp->next = *pp;
+
     *pp = temp;
 }
 void ViewElement(struct Pair p)
@@ -32,11 +35,8 @@ void ViewList(Node node)
 {
     while (node != NULL)
     {
-        if (strcmp(node->pair.key, "") != 0 && strcmp(node->pair.key, "") != 0)
-        {
-            printf("%s,", (node->pair).key);
-            printf("%s\n", (node->pair).value);
-        }
+        printf("%s,", (node->pair).key);
+        printf("%s\n", (node->pair).value);
         node = node->next;
     }
 }
@@ -54,12 +54,28 @@ void find(Node node, char key[])
     }
     printf("%s not found\n", key);
 }
+
+void add(Node n, Node curr)
+{
+    while (curr != NULL)
+    {
+        if (curr->next == NULL)
+        {
+            curr->next = n;
+            //curr->pair = n->pair;
+            //curr->next = NULL;
+            n->next = NULL;
+        }
+        curr = curr->next;
+    }
+}
+
 void loadTXT(Node *pp)
 {
     FILE *f;
     struct Pair p;
     char *buffer;
-    if (!(f = fopen("bob.txt", "r+")))
+    if (!(f = fopen("bob.txt", "r")))
     {
         perror("Error");
         exit(-1);
@@ -92,44 +108,22 @@ void loadTXT(Node *pp)
     free(buffer);
     fclose(f);
 }
-void add(Node n, Node curr)
-{
-    loadTXT(&curr);
-    if ((curr == NULL) || (strcmp((curr->pair).key, "") == 0 && strcmp((curr->pair).value, "") == 0) || ((curr->pair).key == NULL && (curr->pair).value == NULL))
-    {
-        curr = (Node)malloc(sizeof(struct Node));
-
-        curr->next = NULL;
-        strcpy((curr->pair).key, (n->pair).key);
-        strcpy((curr->pair).value, (n->pair).value);
-      //curr->pair = n->pair;
-        return;
-    }
-    while (curr != NULL)
-    {
-  
-        if (curr->next == NULL)
-        {
-            curr->next = n;
-            n->next = NULL;
-        }
-        curr = curr->next;
-    }
-}
 
 int main(int argc, char *argv[])
 {
-    // HEAD of linked list
-    struct Node *start = NULL;
-    loadTXT(&start);
-    char command[100], key[100], value[100], token2[100];
+
+    //ViewList(start);
+
+    char command[100], key[100], value[100];
 
     for (int i = 1; i < argc; i++)
     {
-        strcpy(command, ""); // must set to empty string every iteration
-        strcpy(key, "");     // must set to empty string every iteration
-        strcpy(value, "");   // must set to empty string every iteration
-        int tokenNum = 0;    // we have commands of 1,2 and 3 tokens so this is necessary
+        struct Node *start = NULL;
+        loadTXT(&start);
+        strcpy(command, "");
+        strcpy(key, "");
+        strcpy(value, "");
+        int tokenNum = 0;
         char string[50];
         strcpy(string, argv[i]);
         // Extract the first token
@@ -152,7 +146,10 @@ int main(int argc, char *argv[])
         if (tokenNum == 2)
             strcpy(value, "");
         if (tokenNum == 1)
-            strcpy(key, "") && strcpy(value, "");
+        {
+            strcpy(key, "");
+            strcpy(value, "");
+        }
 
         if (!((strcmp(command, "p") == 0 && tokenNum == 3) || (strcmp(command, "d") == 0 && tokenNum == 2) || (strcmp(command, "g") == 0 && tokenNum == 2) || (strcmp(command, "a") == 0 && tokenNum == 1) || (strcmp(command, "c") == 0 && tokenNum == 1)))
         {
@@ -160,10 +157,9 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        printf("command:%s\n", command);
-        printf("key:%s\n", key);
-        printf("value:%s\n", value);
-
+        //printf("command:%s\n", command);
+        //printf("key:%s\n", key);
+        //printf("value:%s\n", value);
         // PUT COMMAND
         if (tokenNum == 3)
         {
@@ -177,38 +173,86 @@ int main(int argc, char *argv[])
             temp->pair = p;
             temp->next = NULL;
 
+            FILE *f = fopen("bob.txt", "a+");
             add(temp, start);
+            fprintf(f, "%s,%s\n", key, value);
+            fclose(f);
         }
         // GET COMMAND
-        if (tokenNum == 2 && strcmpi(command, "g") == 0)
+        if (tokenNum == 2 && strcmp(command, "g") == 0)
         {
             find(start, key);
         }
-        // CLEAR COMMAND
-        if (tokenNum == 1 && strcmpi(command, "c") == 0)
+        // DEL COMMAND
+        if (tokenNum == 2 && strcmp(command, "d") == 0)
         {
-            start->next = NULL;
-            strcpy(start->pair.key, "");
-            strcpy(start->pair.value, "");
-            free(start);
-
-            FILE *fp = fopen("bob.txt", "w");
+            // USE KEY TO DELETE LINE
+            FILE *f, *fp;
+            int success = 0;
+            if (!(f = fopen("bob.txt", "a+")) || !(fp = fopen("temp.txt", "w+")))
+            {
+                perror("Error");
+                exit(-1);
+            }
+            char *buffer;
+            buffer = malloc(sizeof(struct Pair));
+            while (fgets(buffer, sizeof(struct Pair), f))
+            {
+                char temp[200], keyT[100], valueT[100];
+                if (sscanf(buffer, "%s", temp) > 0)
+                {
+                    int tokenNum = 0;
+                    char *token = strtok(temp, ",");
+                    while (token != NULL)
+                    {
+                        if (tokenNum == 0)
+                            strcpy(keyT, token);
+                        if (tokenNum == 1)
+                            strcpy(valueT, token);
+                        token = strtok(NULL, ",");
+                        tokenNum++;
+                    }
+                }
+                if (strcmp(key, keyT) != 0)
+                {
+                    fprintf(fp, "%s,%s\n", keyT, valueT);
+                }
+                else
+                {
+                    success = 1;
+                }
+            }
+            fclose(f);
+            if (remove("bob.txt") == 0)
+                ;
+            FILE *copier = fopen("bob.txt", "w");
+            char ch;
+            fseek(fp, 0, SEEK_SET);
+            while ((ch = fgetc(fp)) != EOF)
+                fputc(ch, copier);
             fclose(fp);
+            fclose(copier);
+            loadTXT(&start);
+            free(buffer);
+            if (success == 0)
+                printf("%s not found", key);
+        }
+        // CLEAR COMMAND
+        if (tokenNum == 1 && strcmp(command, "c") == 0)
+        {
+            FILE *f = fopen("bob.txt", "a+");
+            fclose(f);
+            f = fopen("bob.txt", "w");
+            fclose(f);
+            f = fopen("bob.txt", "a+");
+            fclose(f);
         }
         // ALL COMMAND
-        if (tokenNum == 1 && strcmpi(command, "a") == 0)
+        if (tokenNum == 1 && strcmp(command, "a") == 0)
         {
             ViewList(start);
         }
+        free(start);
     }
-    FILE *f = fopen("bob.txt", "w");
-    Node node = start;
-    while (node != NULL)
-    {
-        //if (strcmp(node->pair.key, "") != 0 && strcmp(node->pair.key, "") != 0)
-        fprintf(f, "%s,%s\n", (node->pair).key, (node->pair).value);
-        node = node->next;
-    }
-    fclose(f);
     return 0;
 }

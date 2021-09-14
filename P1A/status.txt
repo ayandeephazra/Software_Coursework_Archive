@@ -12,3 +12,16 @@ b is just y
 ./b p,46,liam p,44,sanders p,59,leonard p,21,merc 
 
 b completely does everything in p,g,c,a just d is left
+
+c is again dumpster fire
+
+d actually works (except the d,key is unfinished) and bug where first put statement cannot immediately be retrived using get
+
+e is trying to implement d,key => is a failed approach to d,key
+
+f is 90% done, just inputs on the same line need tuning, eg) p,45,ark g,45 does not work if file is empty
+
+g just puts the loadTXT in the foor loop to ensure what failed above works,
+
+h ensures that bob.txt does not need to be in the environment before the fact, neither does temp.txt
+h is good till we get remzi's tests

@@ -41,3 +41,7 @@ fix the issue in i, check piazza
 
 i fails to handle multiple key, follow logic in delete block, by opening a new file and copying it instead of renaming.
 i keeps deleting bob.txt midway thru.
+
+j modularized the delete function so add could use it. add was debugged successfully, duplicates resolved.
+
+k is a cleaned up, pretty printed code for j.

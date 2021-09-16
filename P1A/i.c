@@ -58,7 +58,6 @@ void add(Node n, Node curr)
 {
     while (curr != NULL)
     {
-        
         if (curr->next == NULL)
         {
             curr->next = n;
@@ -66,6 +65,7 @@ void add(Node n, Node curr)
             //curr->next = NULL;
             n->next = NULL;
         }
+
         curr = curr->next;
     }
 }
@@ -104,7 +104,6 @@ void loadTXT(Node *pp)
             NewList(p, pp);
         }
     }
-
     free(buffer);
     fclose(f);
 }
@@ -173,16 +172,50 @@ int main(int argc, char *argv[])
             strcpy(p.key, key);
             strcpy(p.value, value);
             Node temp;
-
             temp = (Node)malloc(sizeof(struct Node));
-
             temp->pair = p;
             temp->next = NULL;
 
-            FILE *f = fopen("bob.txt", "a+");
-            add(temp, start);
-            fprintf(f, "%s,%s\n", key, value);
-            fclose(f);
+            int existedPrev = 0;
+            Node rand = (Node)malloc(sizeof(struct Node));
+            Node rand2 = (Node)malloc(sizeof(struct Node));
+            rand = start;
+            rand2 = start;
+            while (rand != NULL)
+            {
+                if (strcmp((rand->pair).key, key) == 0)
+                {
+                    strcpy((rand->pair).value, value);
+                    existedPrev = 1;
+
+                    FILE *floop = fopen("temp.txt", "w");
+                    FILE *f = fopen("bob.txt", "w");
+                    // fprintf(f, "%s,%s\n", key, value);
+                    char ch;
+                    while (rand2 != NULL)
+                    {
+                        fprintf(floop, "%s,%s\n", (rand2->pair).key, (rand2->pair).value);
+                        rand2 = rand2->next;
+                    }
+                    fseek(floop, 0, SEEK_SET);
+                    while ((ch = fgetc(floop)) != EOF)
+                        fputc(ch, f);
+
+                    fclose(floop);
+                    fclose(f);
+                }
+                rand = rand->next;
+            }
+            free(rand);
+            free(rand2);
+            if (existedPrev == 0)
+            {
+                add(temp, start);
+                FILE *f = fopen("bob.txt", "a+");
+                fprintf(f, "%s,%s\n", key, value);
+                fclose(f);
+            }
+            free(temp);
         }
         // GET COMMAND
         if (tokenNum == 2 && strcmp(command, "g") == 0)
@@ -229,8 +262,7 @@ int main(int argc, char *argv[])
                 }
             }
             fclose(f);
-            if (remove("bob.txt") == 0)
-                ;
+            if (remove("bob.txt") == 0);               ;
             FILE *copier = fopen("bob.txt", "w");
             char ch;
             fseek(fp, 0, SEEK_SET);

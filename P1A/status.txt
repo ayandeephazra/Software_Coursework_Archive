@@ -24,4 +24,20 @@ f is 90% done, just inputs on the same line need tuning, eg) p,45,ark g,45 does 
 g just puts the loadTXT in the foor loop to ensure what failed above works,
 
 h ensures that bob.txt does not need to be in the environment before the fact, neither does temp.txt
-h is good till we get remzi's tests
+h is good till we get remzi's tests. h deletes all instances of a key if multiple exist.
+
+fix the issue in i, check piazza
+
+   else
+        {
+            printf("here");
+            if (strcmp((curr->next->pair).key, (n->pair).key) == 0)
+            {
+                printf("here");
+                strcpy((curr->next->pair).value, (n->pair).value);
+                return;
+            }
+        }
+
+i fails to handle multiple key, follow logic in delete block, by opening a new file and copying it instead of renaming.
+i keeps deleting bob.txt midway thru.

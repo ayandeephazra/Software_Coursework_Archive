@@ -58,7 +58,7 @@ void add(Node n, Node curr)
 {
     while (curr != NULL)
     {
-        
+
         if (curr->next == NULL)
         {
             curr->next = n;
@@ -107,6 +107,57 @@ void loadTXT(Node *pp)
 
     free(buffer);
     fclose(f);
+}
+
+void del(char key[], Node start, int print)
+{
+    // USE KEY TO DELETE LINE
+    FILE *f, *fp;
+    int success = 0;
+    if (!(f = fopen("bob.txt", "a+")) || !(fp = fopen("temp.txt", "w+")))
+    {
+        perror("Error");
+        exit(-1);
+    }
+    char *buffer;
+    buffer = malloc(sizeof(struct Pair));
+    while (fgets(buffer, sizeof(struct Pair), f))
+    {
+        char temp[200], keyT[100], valueT[100];
+        if (sscanf(buffer, "%s", temp) > 0)
+        {
+            int tokenNum = 0;
+            char *token = strtok(temp, ",");
+            while (token != NULL)
+            {
+                if (tokenNum == 0)
+                    strcpy(keyT, token);
+                if (tokenNum == 1)
+                    strcpy(valueT, token);
+                token = strtok(NULL, ",");
+                tokenNum++;
+            }
+        }
+        if (strcmp(key, keyT) != 0)
+            fprintf(fp, "%s,%s\n", keyT, valueT);
+
+        else
+            success = 1;
+    }
+    fclose(f);
+    if (remove("bob.txt") == 0)
+        ;
+    FILE *copier = fopen("bob.txt", "w");
+    char ch;
+    fseek(fp, 0, SEEK_SET);
+    while ((ch = fgetc(fp)) != EOF)
+        fputc(ch, copier);
+    fclose(fp);
+    fclose(copier);
+    loadTXT(&start);
+    free(buffer);
+    if (success == 0 && print == 1)
+        printf("%s not found\n", key);
 }
 
 int main(int argc, char *argv[])
@@ -163,9 +214,6 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        //printf("command:%s\n", command);
-        //printf("key:%s\n", key);
-        //printf("value:%s\n", value);
         // PUT COMMAND
         if (tokenNum == 3)
         {
@@ -173,12 +221,12 @@ int main(int argc, char *argv[])
             strcpy(p.key, key);
             strcpy(p.value, value);
             Node temp;
-
             temp = (Node)malloc(sizeof(struct Node));
-
             temp->pair = p;
             temp->next = NULL;
-
+            // deletes all instances of the key presently in the database
+            del(key, start, 1);
+            // new key is inserted
             FILE *f = fopen("bob.txt", "a+");
             add(temp, start);
             fprintf(f, "%s,%s\n", key, value);
@@ -192,56 +240,7 @@ int main(int argc, char *argv[])
         // DEL COMMAND
         if (tokenNum == 2 && strcmp(command, "d") == 0)
         {
-            // USE KEY TO DELETE LINE
-            FILE *f, *fp;
-            int success = 0;
-            if (!(f = fopen("bob.txt", "a+")) || !(fp = fopen("temp.txt", "w+")))
-            {
-                perror("Error");
-                exit(-1);
-            }
-            char *buffer;
-            buffer = malloc(sizeof(struct Pair));
-            while (fgets(buffer, sizeof(struct Pair), f))
-            {
-                char temp[200], keyT[100], valueT[100];
-                if (sscanf(buffer, "%s", temp) > 0)
-                {
-                    int tokenNum = 0;
-                    char *token = strtok(temp, ",");
-                    while (token != NULL)
-                    {
-                        if (tokenNum == 0)
-                            strcpy(keyT, token);
-                        if (tokenNum == 1)
-                            strcpy(valueT, token);
-                        token = strtok(NULL, ",");
-                        tokenNum++;
-                    }
-                }
-                if (strcmp(key, keyT) != 0)
-                {
-                    fprintf(fp, "%s,%s\n", keyT, valueT);
-                }
-                else
-                {
-                    success = 1;
-                }
-            }
-            fclose(f);
-            if (remove("bob.txt") == 0)
-                ;
-            FILE *copier = fopen("bob.txt", "w");
-            char ch;
-            fseek(fp, 0, SEEK_SET);
-            while ((ch = fgetc(fp)) != EOF)
-                fputc(ch, copier);
-            fclose(fp);
-            fclose(copier);
-            loadTXT(&start);
-            free(buffer);
-            if (success == 0)
-                printf("%s not found", key);
+            del(key, start, 1);
         }
         // CLEAR COMMAND
         if (tokenNum == 1 && strcmp(command, "c") == 0)
@@ -255,9 +254,8 @@ int main(int argc, char *argv[])
         }
         // ALL COMMAND
         if (tokenNum == 1 && strcmp(command, "a") == 0)
-        {
             ViewList(start);
-        }
+
         free(start);
     }
     return 0;

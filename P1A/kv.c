@@ -62,8 +62,6 @@ void add(Node n, Node curr)
         if (curr->next == NULL)
         {
             curr->next = n;
-            //curr->pair = n->pair;
-            //curr->next = NULL;
             n->next = NULL;
         }
         curr = curr->next;
@@ -210,7 +208,7 @@ int main(int argc, char *argv[])
 
         if (!((strcmp(command, "p") == 0 && tokenNum == 3) || (strcmp(command, "d") == 0 && tokenNum == 2) || (strcmp(command, "g") == 0 && tokenNum == 2) || (strcmp(command, "a") == 0 && tokenNum == 1) || (strcmp(command, "c") == 0 && tokenNum == 1)))
         {
-            printf("bad commmand\n");
+            printf("bad command\n");
             continue;
         }
 
@@ -218,6 +216,11 @@ int main(int argc, char *argv[])
         if (tokenNum == 3)
         {
             struct Pair p;
+            if (atoi(key) == 0)
+            {
+                printf("bad command\n");
+                continue;
+            }
             strcpy(p.key, key);
             strcpy(p.value, value);
             Node temp;

@@ -58,6 +58,7 @@ void add(Node n, Node curr)
 {
     while (curr != NULL)
     {
+
         if (curr->next == NULL)
         {
             curr->next = n;
@@ -77,6 +78,7 @@ void loadTXT(Node *pp)
         perror("Error");
         exit(-1);
     }
+
     buffer = malloc(sizeof(struct Pair));
 
     while (fgets(buffer, sizeof(struct Pair), f))
@@ -100,6 +102,7 @@ void loadTXT(Node *pp)
             NewList(p, pp);
         }
     }
+
     free(buffer);
     fclose(f);
 }
@@ -108,7 +111,7 @@ void del(char key[], Node start, int print)
 {
     // USE KEY TO DELETE LINE
     FILE *f, *fp;
-    int success = 0; // success vairable to display if "key not found" or not
+    int success = 0;
     if (!(f = fopen("bob.txt", "a+")) || !(fp = fopen("temp.txt", "w+")))
     {
         perror("Error");
@@ -147,7 +150,8 @@ void del(char key[], Node start, int print)
     fseek(fp, 0, SEEK_SET);
     while ((ch = fgetc(fp)) != EOF)
         fputc(ch, copier);
-    fclose(fp) && fclose(copier); // close files
+    fclose(fp);
+    fclose(copier);
     loadTXT(&start);
     free(buffer);
     // print is high for delete command and low for add command, add uses this function internally
@@ -159,8 +163,9 @@ int main(int argc, char *argv[])
 {
     FILE *file;
     if ((file = fopen("bob.txt", "r")))
+    {
         fclose(file);
-    
+    }
     file = fopen("bob.txt", "a+");
     fclose(file);
 
@@ -182,7 +187,7 @@ int main(int argc, char *argv[])
         // loop through the string to extract all other tokens
         while (token != NULL)
         {
-            // different ifs for number of tokens in total, 1, 2, 3
+            //printf(" %s\n", token); //printing each token
             if (tokenNum == 0)
                 strcpy(command, token);
             if (tokenNum == 1)
@@ -196,18 +201,21 @@ int main(int argc, char *argv[])
         if (tokenNum == 2)
             strcpy(value, "");
         if (tokenNum == 1)
-            strcpy(key, "") && strcpy(value, "");
-        // big if statement that check for bad commands and prints it out
+        {
+            strcpy(key, "");
+            strcpy(value, "");
+        }
+
         if (!((strcmp(command, "p") == 0 && tokenNum == 3) || (strcmp(command, "d") == 0 && tokenNum == 2) || (strcmp(command, "g") == 0 && tokenNum == 2) || (strcmp(command, "a") == 0 && tokenNum == 1) || (strcmp(command, "c") == 0 && tokenNum == 1)))
         {
             printf("bad commmand\n");
             continue;
         }
 
-        // PUT COMMAND (p)
+        // PUT COMMAND
         if (tokenNum == 3)
         {
-            struct Pair p; // making a pair object of the key and value
+            struct Pair p;
             strcpy(p.key, key);
             strcpy(p.value, value);
             Node temp;
@@ -216,21 +224,23 @@ int main(int argc, char *argv[])
             temp->next = NULL;
             // deletes all instances of the key presently in the database
             del(key, start, 0);
-            // new key is inserted thence
+            // new key is inserted
             FILE *f = fopen("bob.txt", "a+");
             add(temp, start);
             fprintf(f, "%s,%s\n", key, value);
             fclose(f);
         }
-        // GET COMMAND (g)
+        // GET COMMAND
         if (tokenNum == 2 && strcmp(command, "g") == 0)
+        {
             find(start, key);
-
-        // DEL COMMAND (d)
+        }
+        // DEL COMMAND
         if (tokenNum == 2 && strcmp(command, "d") == 0)
+        {
             del(key, start, 1);
-
-        // CLEAR COMMAND (c)
+        }
+        // CLEAR COMMAND
         if (tokenNum == 1 && strcmp(command, "c") == 0)
         {
             FILE *f = fopen("bob.txt", "a+");
@@ -240,8 +250,7 @@ int main(int argc, char *argv[])
             f = fopen("bob.txt", "a+");
             fclose(f);
         }
-
-        // ALL COMMAND (a)
+        // ALL COMMAND
         if (tokenNum == 1 && strcmp(command, "a") == 0)
             ViewList(start);
 

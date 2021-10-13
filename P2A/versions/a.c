@@ -1,8 +1,10 @@
+#define _XOPEN_SOURCE 700
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <process.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -14,7 +16,6 @@ int exit_mode(char str[], int tokenCount)
     char *commandToken;
     int commandCount = 0;
     commandToken = strtok(commandStr, " \n");
-    // printf(commandToken);
 
     while (commandToken != NULL)
     {
@@ -31,9 +32,13 @@ int exit_mode(char str[], int tokenCount)
                 return -1;
             }
         }
-        //printf("%s\n", commandToken);
         commandToken = strtok(NULL, " ");
     }
+}
+
+int ls_mode()
+{
+    return 0;
 }
 
 int interactive_mode()
@@ -80,8 +85,18 @@ int main(int argc, char *argv[])
     // interactive
     if (argc == 1)
     {
+
+        char *cmd_argv[20];
+        cmd_argv[0] = strdup("/bin/ls");
+        cmd_argv[1] = NULL;
         while (1)
         {
+            int rc = fork();
+
+            if (rc == 0)
+            {
+                execv(cmd_argv[0], cmd_argv);
+            }
             int ret = interactive_mode();
             if (ret == -1)
             {

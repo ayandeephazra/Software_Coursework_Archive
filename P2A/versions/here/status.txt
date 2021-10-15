@@ -1,0 +1,16 @@
+a.c -> does exit perfectly, ls is confusing thus commented out
+
+b.c -> does ls but prints wish> then the expected output ?
+
+c.c -> unexplained segfaults, dead end
+
+d.c -> new approach continuing from a.c. Found out reason for segfault. Changed in c.c too. d started out as as savestate of c.c.
+
+      for (int j = 0; j < tokenCount; j++)
+            {
+                printf("%i %s\n", j, commands[j]);
+            }
+
+EXIT WORKS!!!!
+
+e.c ->

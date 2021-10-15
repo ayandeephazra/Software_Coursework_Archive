@@ -16,3 +16,77 @@ EXIT WORKS!!!!
 e.c -> cd works! added error case to cd, path also works now! only non built in left.
 
 f.c -> non in-built woes
+
+g.c -> unistd incorporation. CURRENT WORKING VERSION. PASSES 1 AND 2.
+
+h.c -> removed core dump, still the non built in commands do not work. check batch.txt and rerun the h.c executable to see what went wrong. 10% for now.
+TA HELP DOC
+
+i.c -> TA help
+  // access check all paths for valid one for ls
+  // "/bin/ls" , ->["ls, "-l", NULL] || ["-l", NULL]
+  // bin/ls   >    output
+// shave off whitespace firs tand then use > as delim OR
+// use > as delim and then shave off whitespace from left and right
+
+j.c -> ["ls, "-l", NULL] vs ["-l", NULL] think it worked, have to hammer out the details
+
+k.c -> ������������: cannot access '': No such file or directory
+error
+
+l.c -> modularizing - DEAD END
+
+m.c -> copy of k.c and changes suggested by TA
+
+n.c -> 1,2,3, 5, 6, 13, 16
+
+test 8 usecase
+
+        /*  for (int i = 0; i < tokenCount; i++)
+            {
+                if (strcmp(commands[i], ">"))
+                {
+                    if (i == tokenCount - 1)
+                    {
+                        char error_message[30] = "An error has occurred\n";
+                        write(STDERR_FILENO, error_message, strlen(error_message));
+                        exit(0);
+                    }
+                    else
+                        continue;
+                }
+            }*/
+
+o.c -> save state of wish.c
+
+p.c -> 1,2,5,6,12,13,16
+
+q.c -> 1,2,5,6,8,9,10,12,13,14,16
+
+failed method
+
+
+       if (strchr(commands[0], ".") != NULL)
+            {
+
+                char *ptr;
+                int ch = '.';
+
+                ptr = strchr(commands[0], ch);
+                if (strcmp(ptr, ".sh") == 0)
+                {
+                    char error_message[30] = "An error has occurred\n";
+                    write(STDERR_FILENO, error_message, strlen(error_message));
+                    exit(0);
+                }
+            }
+
+r.c -> same as q.c with 1,2,5,6,8,9,10,12,13,14,16 same but 6, 12 are coded not left for compiler
+
+s.c -> save state with lots of comments
+
+t.c -> r.c + 3
+
+u.c -> r.c + 3,4
+
+v.c -> above + 17

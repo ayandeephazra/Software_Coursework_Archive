@@ -1,0 +1,3 @@
+For the scheduling part, I made two system calls, settickets and getpinfo, which set the number of tickets and the returns the process info of a process respectively. I altered the proc.h structure to include a tickets and ticks variable. Tickets records the number of tickets a process has and a tick is one instance of a time slice running a process. This accumulates over time as the scheduler gives more time to each process depending on the tickets.
+
+The null pointer part of the file handles the null pointer exceptions in the file. Made changes to the copyuvm function so that it copies VM from the next page. Made sure that pointer passed in argptr is bigger than PGSIZE. Made changes to makefile, specifically the addresses of the accesses. 

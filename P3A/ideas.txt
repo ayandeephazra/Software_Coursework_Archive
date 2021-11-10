@@ -1,0 +1,2 @@
+same parsing strat as before, check last two arguments for > and filename to port output to.
+

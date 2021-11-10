@@ -1,403 +1,358 @@
 #include <stdio.h>
-
 #include <sys/mman.h>
-
 #include <stdio.h>
-
 #include <fcntl.h>
-
 #include <unistd.h>
-
 #include <sys/stat.h>
-
 #include <sys/sysinfo.h>
-
 #include <stdlib.h>
-
 #include <string.h>
-
 #include <pthread.h>
 
-typedef struct bound
+int NPROCS;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+char **file;
+void *current_addr = 0;
+int num_thread;
+struct node **newfile;
+int *newfile_size;
+
+struct input
 {
+    int index;
+    int len;
+    char *line;
+};
 
-    int start;
-
-    int end;
-
-} bound;
-
-typedef struct argpack
+struct limit
 {
+    int begin;
+    int last;
+    int size;
+};
 
-    char *ptr;
 
-    bound bd;
-
-} argpack;
-
-typedef struct run
+struct bottom
 {
+    char *pointer;
+    struct limit body;
+};
 
-    int reps;
-
-    char ch;
-
-} __attribute__((packed)) run;
-
-typedef struct retpack
+struct node
 {
+    int count;
+    char let;
+};
 
-    run *runs;
-
+struct trial
+{
+    int cycles;
+    char character;
+} __attribute__((packed));
+struct data
+{
+    struct trial *trials;
     int n;
+};
 
-} retpack;
+struct limit *get_even_limits(int chunks, int size)
+{
+    struct limit *limits = malloc(chunks * sizeof(struct limit));
+    int rem = size % chunks;
+    int limitsize = size / chunks;
+    int offset = 0;
+    int i = 0;
+    for (; i < chunks; i++)
+    {
+        limits[i].begin = offset;
+        if (i >= rem)
+        {
+            limits[i].last = offset + limitsize;
+        }
+        else
+        {
+            limits[i].last = offset + limitsize + 1;
+        }
+        limits[i].size = limits[i].last - limits[i].begin;
+        if (i >= rem)
+        {
+            offset = offset + limitsize;
+        }
+        else
+        {
+            offset = offset + limitsize + 1;
+        }
+    }
+    return limits;
+}
 
-bound *get_even_bounds(int n, int size);
+void *compress_deprecated(void *arguments, int season)
+{
+    struct input *input = (struct input *)arguments;
+    long bottom = input->len;
+    struct node *file = malloc(sizeof(struct node) * season);
+    int begin = season;
+    int index = 0;
+    do
+    {
+        if (*(input->line + index) == 0)
+        {
+            index++;
+            continue;
+        }
+        else
+            break;
+    } while (index < bottom);
+    char character = *(input->line + index);
+    int cc = 1;
+    int ni = 0;
+    index++;
+    for (; index < bottom;)
+    {
+        if (*(input->line + index) == 0)
+        {
+            index++;
+            continue;
+        }
+        if (character != *(input->line + index))
+        {
+            if (ni == begin)
+            {
+                begin = begin * 2;
+                file = realloc(file, sizeof(struct node) * begin);
+                if (file == NULL)
+                {
+                    printf("Thread %d realloc 2 in compress() failed\n", input->index);
+                    exit(1);
+                }
+            }
+            file[ni].count = cc;
+            file[ni].let = character;
+            character = *(input->line + index);
+            cc = 1;
+            ni++;
+        }
+        else
+        {
+            cc++;
+        }
+        index++;
+    }
+    file[ni].count = cc;
+    file[ni].let = character;
+    ni++;
+    newfile[input->index] = malloc(sizeof(struct node) * ni);
+    newfile_size[input->index] = ni;
+    memcpy(newfile[input->index], file, sizeof(struct node) * ni);
+    free(input);
+    return NULL;
+}
 
-void *zip_t(void *args);
+struct data *wzip(char *string, struct limit body)
+{
+    int index = 0;
+    struct trial *marlo = malloc(body.size * sizeof(struct trial));
+    int charcount;
+    int begin = body.begin + 1;
+    char character, total;
+    character = string[body.begin];
+    while (character == '\0' && begin < body.last)
+    {
+        character = string[begin++];
+    }
+    if (body.size == 1)
+    {
+        marlo[0].cycles = 1;
+        marlo[0].character = character;
+        index = 1;
+        struct data *temp = malloc(sizeof(struct data *));
+        temp->trials = marlo;
+        temp->n = index;
+        return temp;
+    }
+    while (begin < body.last)
+    {
+        total = character;
+        charcount = 1;
+        while (begin < body.last && ((character = string[begin++]) == total || character == '\0'))
+        {
+            if (character != '\0')
+            {
+                charcount++;
+            }
+        }
+        marlo[index].cycles = charcount;
+        marlo[index].character = total;
+        index++;
+    }
+    if (string[begin - 1] != string[begin - 2])
+    {
+        marlo[index].cycles = 1;
+        marlo[index].character = string[begin - 1];
+        index++;
+    }
+    if (index == 0)
+    {
+        free(marlo);
+        return NULL;
+    }
+    marlo = realloc(marlo, index * sizeof(struct trial));
+    struct data *temp = malloc(sizeof(struct data));
+    temp->trials = marlo;
+    temp->n = index;
+    return temp;
+}
 
-retpack *zip(char *str, bound bd);
+void pzip(char *str)
+{
 
-void *printboundpack(void *args);
+    int length = strlen(str);
 
-void printbound(char *arr, bound bd);
+    for (int i = 0; i < length; i++)
+    {
+        int count = 1;
+        while (i < length - 1 && str[i] == str[i + 1])
+        {
+            count++;
+            i++;
+        }
+        if (str[i] != '\n')
+        {
+            //printf("%d%c",count,str[i]);
+            fwrite(&count, 4, 1, stdout);
+            fwrite(&str[i], 1, 1, stdout);
+        }
+        else
+        {
+            //printf("%d\\n",count);
+            char nextLine = '\n';
+            fwrite(&count, 4, 1, stdout);
+            fwrite(&nextLine, 1, 1, stdout);
+        }
+    }
+    //printf("\n");
+}
 
-run *writezip(int nprocs, pthread_t *threads, run *holdout);
+struct trial *generate(int nprocs, pthread_t *objects, struct trial *runnout)
+{
+    struct data *total1;
+    struct data *total2;
+    pthread_join(objects[0], (void *)&total2);
+    int index = 1;
+    while (total2 == NULL)
+    {
+        pthread_join(objects[index++], (void *)&total2);
+    }
+    if (runnout != NULL)
+    {
+        struct trial *begin = &total2->trials[0];
+        if (runnout->character == begin->character)
+        {
+            begin->cycles = begin->cycles + runnout->cycles;
+        }
+        else
+        {
+            int *val = &total2->n;
+            total2->trials = realloc(total2->trials, *val * (sizeof(struct trial) + 1));
+            memmove(total2->trials + 1, total2->trials, *val * sizeof(struct trial));
+            total2->trials[0] = *runnout;
+            *val = *val + 1;
+        }
+    }
+    for (; index < NPROCS; index++)
+    {
+        total1 = total2;
+        pthread_join(objects[index], (void *)&total2);
+        if (total2 == NULL)
+        {
+            total2 = total1;
+            continue;
+        }
+        struct trial *max = total1->trials;
+        int *val = &total1->n;
+        if (max[*val - 1].character == total2->trials[0].character)
+        {
+            total2->trials[0].cycles = total2->trials[0].cycles + max[*val - 1].cycles;
+            max = realloc(max, sizeof(struct trial) * (*val - 1));
+            *val = *val - 1;
+        }
+        fwrite(max, sizeof(struct trial), *val, stdout);
+        free(total1);
+    }
+    struct trial *max = total2->trials;
+    int n = total2->n;
+    fwrite(max, sizeof(struct trial), n - 1, stdout);
+    runnout = &max[n - 1];
+    free(total2);
+    fflush(stdout);
+    return runnout;
+}
+
+void *worker(void *argument)
+{
+    struct bottom typecastedBottom = *(struct bottom *)argument;
+    struct limit body = typecastedBottom.body;
+    char *string = typecastedBottom.pointer;
+
+    free(argument);
+    return wzip(string, body);
+}
 
 int main(int argc, char *argv[])
 {
 
     if (argc < 2)
     {
-
         printf("pzip: file1 [file2 ...]\n");
-
         exit(1);
     }
-
-    int nprocs = get_nprocs();
-
-    int validf = 0;
-
-    run *holdout = NULL;
-
+    NPROCS = get_nprocs();
+    int validfiles = 0;
+    struct trial *runnout = NULL;
     for (int f = 1; f < argc; f++)
     {
-
         char *fileName = argv[f];
-
         int fd;
-
         if ((fd = open(fileName, O_RDONLY)) < 0)
         {
-
             continue;
         }
-
-        validf++;
-
+        validfiles++;
         struct stat statbuf;
-
         if (fstat(fd, &statbuf) < 0)
         {
-
             printf("Couldn't get file stats\n");
-
             exit(1);
         }
-
-        char *ptr = mmap(NULL, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
-
-        if (ptr == MAP_FAILED)
+        char *pointer = mmap(NULL, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
+        if (pointer == MAP_FAILED)
         {
-
             printf("Mapping failed\n");
-
             exit(1);
         }
-
         close(fd);
-
-        bound *bounds = get_even_bounds(nprocs, statbuf.st_size);
-
-        pthread_t *threads = malloc(sizeof(pthread_t) * nprocs);
-
-        argpack *args;
-
-        for (int i = 0; i < nprocs; i++)
+        struct limit *limits = get_even_limits(NPROCS, statbuf.st_size);
+        pthread_t *threads = malloc(sizeof(pthread_t) * NPROCS);
+        struct bottom *args;
+        for (int i = 0; i < NPROCS; i++)
         {
-
             args = malloc(sizeof *args);
-
-            args->ptr = ptr;
-
-            args->bd = bounds[i];
-
-            if (pthread_create(&threads[i], NULL, zip_t, args) != 0)
+            args->pointer = pointer;
+            args->body = limits[i];
+            if (pthread_create(&threads[i], NULL, worker, args) != 0)
             {
-
                 printf("Unable to create thread %d\n", i);
-
                 exit(1);
             }
         }
-
-        holdout = writezip(nprocs, threads, holdout);
-
-        munmap(ptr, statbuf.st_size);
-
-        free(bounds);
-
+        runnout = generate(NPROCS, threads, runnout);
+        munmap(pointer, statbuf.st_size);
+        free(limits);
         free(threads);
     }
-
-    if (validf)
+    if (validfiles)
     {
-
-        fwrite(holdout, sizeof(run), 1, stdout);
+        fwrite(runnout, sizeof(struct trial), 1, stdout);
     }
-
     return 0;
-}
-
-run *writezip(int nprocs, pthread_t *threads, run *holdout)
-{
-
-    retpack *ret1;
-
-    retpack *ret2;
-
-    pthread_join(threads[0], (void *)&ret2);
-
-    int i = 1;
-
-    while (ret2 == NULL)
-    {
-
-        pthread_join(threads[i++], (void *)&ret2);
-    }
-
-    if (holdout != NULL)
-    {
-
-        run *begin = &ret2->runs[0];
-
-        if (holdout->ch == begin->ch)
-        { // if there's an overlap, easy - just add extra occurrences to beginning run
-
-            begin->reps += holdout->reps;
-        }
-
-        else
-        { // if not, it's harder - we now have to add back to beginning of new array, shifting contents over
-
-            int *n = &ret2->n;
-
-            ret2->runs = realloc(ret2->runs, *n * (sizeof(run) + 1));
-
-            memmove(ret2->runs + 1, ret2->runs, *n * sizeof(run));
-
-            ret2->runs[0] = *holdout;
-
-            *n += 1;
-        }
-    }
-
-    for (; i < nprocs; i++)
-    {
-
-        ret1 = ret2;
-
-        pthread_join(threads[i], (void *)&ret2);
-
-        if (ret1 == NULL)
-        { // this check might be redundant but idk
-
-            continue;
-        }
-
-        if (ret2 == NULL)
-        {
-
-            ret2 = ret1;
-
-            continue;
-        }
-
-        run *runs = ret1->runs;
-
-        int *n = &ret1->n;
-
-        if (runs[*n - 1].ch == ret2->runs[0].ch)
-        {
-
-            ret2->runs[0].reps += runs[*n - 1].reps;
-
-            runs = realloc(runs, sizeof(run) * (*n - 1));
-
-            *n -= 1;
-        }
-
-        fwrite(runs, sizeof(run), *n, stdout);
-
-        free(ret1);
-    }
-
-    run *runs = ret2->runs;
-
-    int n = ret2->n;
-
-    fwrite(runs, sizeof(run), n - 1, stdout);
-
-    holdout = &runs[n - 1]; // save the last run before writing it, so we can merge it with the next file if needed
-
-    free(ret2);
-
-    fflush(stdout);
-
-    return holdout;
-}
-
-void *zip_t(void *args)
-{
-
-    argpack argstruct = *(argpack *)args;
-
-    char *arr = argstruct.ptr;
-
-    bound bd = argstruct.bd;
-
-    free(args);
-
-    return zip(arr, bd);
-}
-
-retpack *zip(char *str, bound bd)
-{
-
-    int size = bd.end - bd.start;
-
-    int runs = 0;
-
-    run *buf = malloc(size * sizeof(run));
-
-    int chcount;
-
-    int i = bd.start + 1;
-
-    char ch, repch;
-
-    ch = str[bd.start];
-
-    while (ch == '\0' && i < bd.end)
-    { // skip to first non-terminal
-
-        ch = str[i++];
-    }
-
-    if (size == 1)
-    {
-
-        buf[0].reps = 1;
-
-        buf[0].ch = ch;
-
-        runs = 1;
-
-        retpack *r = malloc(sizeof(retpack *));
-
-        r->runs = buf;
-
-        r->n = runs;
-
-        return r;
-    }
-
-    while (i < bd.end)
-    {
-
-        repch = ch;
-
-        chcount = 1;
-
-        while (i < bd.end && ((ch = str[i++]) == repch || ch == '\0'))
-        {
-
-            if (ch != '\0')
-            {
-
-                chcount++;
-            }
-        }
-
-        buf[runs].reps = chcount;
-
-        buf[runs].ch = repch;
-
-        runs++;
-    }
-
-    if (str[i - 1] != str[i - 2])
-    {
-
-        buf[runs].reps = 1;
-
-        buf[runs].ch = str[i - 1];
-
-        runs++;
-    }
-
-    if (runs == 0)
-    {
-
-        free(buf);
-
-        return NULL;
-    }
-
-    buf = realloc(buf, runs * sizeof(run));
-
-    retpack *r = malloc(sizeof(retpack));
-
-    r->runs = buf;
-
-    r->n = runs;
-
-    return r;
-}
-
-/* Returns a list of bounds that will split an array of size size into n approximately equal chunks.
-
- * If size % n != 0, then the first size % n chunks will be one larger than the last n - (size % n).
-
- * Ex: for n = 3 and size = 60, returns [0, 20], [20, 40], [40, 60]. 
-
- *     for n = 3 and size = 58, returns [0, 20], [20, 39], [39, 58]. */
-
-bound *get_even_bounds(int n, int size)
-{
-
-    // size = size + 1;
-
-    bound *bounds = malloc(n * sizeof(bound));
-
-    int leftover = size % n;
-
-    int boundsize = size / n;
-
-    int offset = 0;
-
-    for (int currbound = 0; currbound < n; currbound++)
-    {
-
-        bounds[currbound].start = offset;
-
-        bounds[currbound].end = (currbound < leftover) ? (offset + boundsize + 1) : (offset + boundsize);
-
-        offset += (currbound < leftover) ? boundsize + 1 : boundsize;
-    }
-
-    return bounds;
 }

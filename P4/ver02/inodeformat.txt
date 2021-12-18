@@ -1,0 +1,5 @@
+struct inode{
+  int size;
+  int isRegular; // 0 is directory, 1 is regular file
+  inode *pointer[14];  
+};

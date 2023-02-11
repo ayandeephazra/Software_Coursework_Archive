@@ -1,4 +1,4 @@
-
+NUM_PIECE: constant(uint32) = 5
 
 # NOTE: The provided code is only a suggestion
 # You can change all of this code (as long as the ABI stays the same)

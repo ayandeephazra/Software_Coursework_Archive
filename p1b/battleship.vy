@@ -1,4 +1,4 @@
-#''' A simple implementation of battleship in Vyper '''
+
 
 # NOTE: The provided code is only a suggestion
 # You can change all of this code (as long as the ABI stays the same)

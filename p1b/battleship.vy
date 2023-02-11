@@ -28,7 +28,7 @@ next_player: uint32
 phase: int32
 
 # my variables
-
+a: int32
 
 @external
 def __init__(player1: address, player2: address):

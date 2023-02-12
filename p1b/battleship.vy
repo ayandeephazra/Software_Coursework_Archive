@@ -70,18 +70,19 @@ def set_field(pos_x: int128, pos_y: int128):
 
     if msg.sender == players[0]:
         from_player = 0
-        
+        # exception where you cannot set more than 5 pieces
+        if self.pieces_1 == NUM_PIECES:
+            raise "Cannot set more than 5 pieces"
     elif msg.sender == players[1]:
         from_player = 1
-        
+        # exception where you cannot set more than 5 pieces
+        if self.pieces_2 == NUM_PIECES:
+            raise "Cannot set more than 5 pieces"
     else:
         raise "Sender is not a player"
 
     if self.board[from_player][pos_x][pos_y] != 0:
         raise "Field was already set"
-
-    if self.pieces_1 > NUM_PIECES or self.pieces_2 > NUM_PIECES:
-        raise "Cannot set more than 5 pieces"
 
     # player 0 setting
     if from_player == 0 and self.pieces_1 < NUM_PIECES:
@@ -92,7 +93,7 @@ def set_field(pos_x: int128, pos_y: int128):
     if from_player == 1 and self.pieces_2 < NUM_PIECES:
         self.board[from_player][pos_x][pos_y] = 1
         self.pieces_2 = self.pieces_2 + 1
-               
+
     # 5 pieces set by each
     if self.pieces_1 == NUM_PIECES and self.pieces_2 == NUM_PIECES:
         self.phase = PHASE_SHOOT

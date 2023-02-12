@@ -4,7 +4,7 @@
 # You can change all of this code (as long as the ABI stays the same)
 
 NUM_PIECES: constant(int128) = 5
-BOARD_SIZE: constant(uint32) = 5
+BOARD_SIZE: constant(int128) = 5
 
 # What phase of the game are we in ?
 # Start with SET and end with END
@@ -28,12 +28,12 @@ next_player: uint32
 phase: int32
 
 # my variables
-board: int32[2][5][5]
-board_opp: int32[2][5][5]
-pieces_1: int128
-pieces_2: int128
-hitcount_1: uint32
-hitcount_2: uint32
+board: int128[5][5][2]
+#board_opp: int128[5][5][2]
+pieces_1: int128 
+pieces_2: int128 
+hitcount_0: int128
+hitcount_1: int128
 
 @external
 def __init__(player1: address, player2: address):
@@ -42,15 +42,15 @@ def __init__(player1: address, player2: address):
     self.phase = PHASE_SET
 
     #TODO initialize whatever you need here
-    self.board = empty(int32[2][5][5])
-    self.board_opp = empty(int32[2][5][5])
+    self.board = empty(int128[5][5][2])
+    #self.board_opp = empty(int128[5][5][2])
     self.pieces_1 = 0
     self.pieces_2 = 0
+    self.hitcount_0 = 0
     self.hitcount_1 = 0
-    self.hitcount_2 = 0
 
 @external
-def set_field(pos_x: uint32, pos_y: uint32):
+def set_field(pos_x: int128, pos_y: int128):
     '''
     Sets a ship at the specified coordinates
     This should only be allowed in the initial phase of the game
@@ -66,17 +66,22 @@ def set_field(pos_x: uint32, pos_y: uint32):
 
     #TODO add the rest here
 
-    from_player: uint32 = 0
+    from_player: int128 = 0
 
     if msg.sender == players[0]:
         from_player = 0
+        
     elif msg.sender == players[1]:
         from_player = 1
+        
     else:
         raise "Sender is not a player"
 
     if self.board[from_player][pos_x][pos_y] != 0:
         raise "Field was already set"
+
+    if self.pieces_1 > NUM_PIECES or self.pieces_2 > NUM_PIECES:
+        raise "Cannot set more than 5 pieces"
 
     # player 0 setting
     if from_player == 0 and self.pieces_1 < NUM_PIECES:
@@ -87,17 +92,14 @@ def set_field(pos_x: uint32, pos_y: uint32):
     if from_player == 1 and self.pieces_2 < NUM_PIECES:
         self.board[from_player][pos_x][pos_y] = 1
         self.pieces_2 = self.pieces_2 + 1
-
-    if self.pieces_1 > NUM_PIECES or self.pieces_2 > NUM_PIECES:
-        raise "Cannot set more than 5 pieces"
-
+               
     # 5 pieces set by each
     if self.pieces_1 == NUM_PIECES and self.pieces_2 == NUM_PIECES:
         self.phase = PHASE_SHOOT
-        self.board_opp = self.board
+        #self.board_opp = self.board
         
 @external
-def shoot(pos_x: uint32, pos_y: uint32):
+def shoot(pos_x: int128, pos_y: int128):
     '''
     Shoot a specific field on the other players board
     This should only be allowed if it is the calling player's turn and only during the SHOOT phase
@@ -105,11 +107,14 @@ def shoot(pos_x: uint32, pos_y: uint32):
 
     if pos_x >= BOARD_SIZE or pos_y >= BOARD_SIZE:
         raise "Position out of bounds"
-
+    
     if self.phase != PHASE_SHOOT:
         raise "Wrong phase"
 
     # Add shooting logic and victory logic here
+
+    if self.hitcount_0 == 5 or self.hitcount_1 == 5:
+        raise "Cannot shoot after winning"
 
     from_player: uint32 = 0
 
@@ -123,36 +128,42 @@ def shoot(pos_x: uint32, pos_y: uint32):
     if from_player != self.next_player:
         raise "Not your turn!"
 
-    if from_player == 0 and self.hitcount_1 != 5:
+    if from_player == 0 and self.hitcount_0 < 5:
         # hit
-        if self.board_opp[1][pos_x][pos_y] == 1:
-            self.board_opp[1][pos_x][pos_y] = 2
-            self.hitcount_1 = self.hitcount_1 + 1
-            self.next_player = (self.next_player + 1) % 2
+        if self.board[1][pos_x][pos_y] == 1:
+            self.board[1][pos_x][pos_y] = 2
+            self.hitcount_0 = self.hitcount_0 + 1
+            if self.hitcount_0 == 5:
+                self.phase = PHASE_END
+            else: 
+                self.next_player = (self.next_player + 1) % 2
         # miss
-        elif self.board_opp[1][pos_x][pos_y] == 0:
-            self.board_opp[1][pos_x][pos_y] = 2
+        elif self.board[1][pos_x][pos_y] == 0:
+            self.board[1][pos_x][pos_y] = 2
             self.next_player = (self.next_player + 1) % 2
         # retry shooting attempt
-        elif self.board_opp[1][pos_x][pos_y] == 2:
+        elif self.board[1][pos_x][pos_y] == 2:
             raise "Cannot redo shoot onto same tile"
 
-    elif from_player == 1 and self.hitcount_2 != 5:
+    if from_player == 1 and self.hitcount_1 < 5:
         # hit
-        if self.board_opp[0][pos_x][pos_y] == 1:
-            self.board_opp[0][pos_x][pos_y] = 2
+        if self.board[0][pos_x][pos_y] == 1:
+            self.board[0][pos_x][pos_y] = 2
             self.hitcount_1 = self.hitcount_1 + 1
-            self.next_player = (self.next_player + 1) % 2
+            if self.hitcount_1 == 5:
+                self.phase = PHASE_END
+            else: 
+                self.next_player = (self.next_player + 1) % 2
         # miss
-        elif self.board_opp[0][pos_x][pos_y] == 0:
-            self.board_opp[0][pos_x][pos_y] = 2
+        elif self.board[0][pos_x][pos_y] == 0:
+            self.board[0][pos_x][pos_y] = 2
             self.next_player = (self.next_player + 1) % 2
         # retry shooting attempt
-        elif self.board_opp[0][pos_x][pos_y] == 2:
+        elif self.board[0][pos_x][pos_y] == 2:
             raise "Cannot redo shoot onto same tile"
 
-    if self.hitcount_1 == 5 or self.hitcount_2==5:
-        self.phase = PHASE_END
+    #if self.hitcount_1 == 5 or self.hitcount_2==5:
+    #    self.phase = PHASE_END
   
 
 @external
@@ -166,10 +177,10 @@ def get_winner() -> address:
     ''' Returns the address of the winner's account '''
 
     #TODO figure out who won
-    if self.hitcount_1 == 5:
+    if self.hitcount_0 == 5:
         return players[0]
         
-    elif self.hitcount_2 == 5:
+    elif self.hitcount_1 == 5:
         return players[1]
         
     # Raise an error if no one won yet

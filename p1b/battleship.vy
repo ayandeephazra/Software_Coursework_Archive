@@ -3,7 +3,7 @@
 # NOTE: The provided code is only a suggestion
 # You can change all of this code (as long as the ABI stays the same)
 
-NUM_PIECES: constant(uint32) = 5
+NUM_PIECES: constant(int128) = 5
 BOARD_SIZE: constant(uint32) = 5
 
 # What phase of the game are we in ?
@@ -30,8 +30,8 @@ phase: int32
 # my variables
 board: int32[2][5][5]
 board_opp: int32[2][5][5]
-pieces_1: uint32
-pieces_2: uint32 
+pieces_1: int128
+pieces_2: int128
 hitcount_1: uint32
 hitcount_2: uint32
 
@@ -82,15 +82,20 @@ def set_field(pos_x: uint32, pos_y: uint32):
     if from_player == 0 and self.pieces_1 < NUM_PIECES:
         self.board[from_player][pos_x][pos_y] = 1
         self.pieces_1 = self.pieces_1 + 1
+ 
     # player 1 setting  
-    elif from_player == 1 and self.pieces_2 < NUM_PIECES:
+    if from_player == 1 and self.pieces_2 < NUM_PIECES:
         self.board[from_player][pos_x][pos_y] = 1
         self.pieces_2 = self.pieces_2 + 1
+
+    if self.pieces_1 > NUM_PIECES or self.pieces_2 > NUM_PIECES:
+        raise "Cannot set more than 5 pieces"
+
     # 5 pieces set by each
-    elif self.pieces_1 == NUM_PIECES and self.pieces_2 == NUM_PIECES:
+    if self.pieces_1 == NUM_PIECES and self.pieces_2 == NUM_PIECES:
         self.phase = PHASE_SHOOT
         self.board_opp = self.board
-    
+        
 @external
 def shoot(pos_x: uint32, pos_y: uint32):
     '''
@@ -145,9 +150,10 @@ def shoot(pos_x: uint32, pos_y: uint32):
         # retry shooting attempt
         elif self.board_opp[0][pos_x][pos_y] == 2:
             raise "Cannot redo shoot onto same tile"
-            
-    #if self.hitcount_1 == 5 or self.hitcount_2 ==5:
-    #    self.has_winner()
+
+    if self.hitcount_1 == 5 or self.hitcount_2==5:
+        self.phase = PHASE_END
+  
 
 @external
 @view
@@ -160,6 +166,12 @@ def get_winner() -> address:
     ''' Returns the address of the winner's account '''
 
     #TODO figure out who won
-
+    if self.hitcount_1 == 5:
+        return players[0]
+        
+    elif self.hitcount_2 == 5:
+        return players[1]
+        
     # Raise an error if no one won yet
-    raise "No one won yet"
+    else:
+        raise "No one won yet"

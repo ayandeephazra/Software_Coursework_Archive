@@ -16,30 +16,36 @@ balanceOf: public(HashMap[address, uint256])
 allowance: public(HashMap[address, HashMap[address, uint256]])
 totalSupply: public(uint256)
 
-# own storage variables
-num_stakeholders: uint256
-yes_vote_token_count: uint256
+# TODO add state that tracks proposals here
+struct proposal:
+    # value won
+    eth: uint256
+    # who proposed it
+    proposer: address
+    # is the proposal approved/not 
+    concluded: bool
+    #voters: DynArray[address, 10]
+    num_votes: uint256
 
 # own constants
 NOT_VOTED: constant(uint256) = 0
 VOTED: constant(uint256) = 1
 
-# TODO add state that tracks proposals here
-struct proposal:
-    eth: uint256
-    proposer: address
-    concluded: bool
-    voters: DynArray[address, 10]
-    num_votes: uint256
-    
-proposal_list: HashMap[uint256, proposal]
-stake_list: HashMap[address, uint256]
-voted_list: HashMap[address, HashMap[uint256, uint256]]
+# own storage variables
+yes_vote_token_count: HashMap[uint256, uint256]
 
+# mapping from a _uid of a proposal to struct proposal,
+# which has more info about the struct
+proposal_list: HashMap[uint256, proposal]
+
+# mapping from an address to a particular proposal and
+# an int. int is 1 if person has voted on given 
+# proposal, identified by _uid and 0 if not
+voted_list: HashMap[address, HashMap[uint256, uint256]]
+    
 @external
 def __init__():
     self.totalSupply = 0
-    self.num_stakeholders = 0
 
 @external
 @payable
@@ -53,12 +59,6 @@ def buyToken():
     # change total supply and account balance
     self.totalSupply = self.totalSupply + value
     self.balanceOf[from_address] = self.balanceOf[from_address] + value
-
-    if self.stake_list[msg.sender] == 0:
-        self.num_stakeholders = self.num_stakeholders + 1
-        self.stake_list[msg.sender] = 1
-    elif self.stake_list[msg.sender] == 1:
-        pass
     pass
 
 @external
@@ -83,16 +83,22 @@ def createProposal(_uid: uint256, _recipient: address, _amount: uint256):
     # TODO implement
 
     if _amount == 0:
-        raise "amount is 0, cannot create proposal with no reward"
+        raise "Exception: amount is 0, cannot create proposal with no reward"
  
+    # condition to see if a proposal ID has been occupied or not
     if self.proposal_list[_uid].eth == 0:
+        # if not, default the proposal's value field
+
+        # default values
         self.proposal_list[_uid].eth = _amount
+        # default values
         self.proposal_list[_uid].proposer = _recipient
-        self.proposal_list[_uid].num_votes = 0
-        self.yes_vote_token_count = 0
+        # has this proposal concluded?
         self.proposal_list[_uid].concluded = False
+        # yes vote has how many tokens cumulatively?
+        self.yes_vote_token_count[_uid] = 0
     else:
-        raise "_uid already in use by another proposal"
+        raise "Exception: _uid already in use by another proposal"
 
     pass
 
@@ -102,26 +108,27 @@ def createProposal(_uid: uint256, _recipient: address, _amount: uint256):
 def approveProposal(_uid: uint256):
     # TODO implement
 
+    from_address: address = msg.sender
+    
     # checking if no stake condition
-    if self.balanceOf[msg.sender] == 0:
+    if self.balanceOf[from_address] == 0:
         raise "Exception: Has no stake in Token"
 
     # checking if certain address voted for proposal referred to by _uid
-    if self.voted_list[msg.sender][_uid] == VOTED:
+    if self.voted_list[from_address][_uid] == VOTED:
         raise "Exception: Already voted, cannot recast vote"
 
-    log Approval(self.proposal_list[_uid].proposer, msg.sender, self.proposal_list[_uid].eth)
-    # determines if proposal passes or not
-    self.proposal_list[_uid].num_votes += 1 
+    log Approval(self.proposal_list[_uid].proposer, from_address, self.proposal_list[_uid].eth)
     # address's vote is counted so it is marked as VOTED
-    self.voted_list[msg.sender][_uid] = VOTED 
+    self.voted_list[from_address][_uid] = VOTED 
     # sum of yes votes' token share
-    self.yes_vote_token_count = self.yes_vote_token_count + self.balanceOf[msg.sender]
+    self.yes_vote_token_count[_uid] = self.yes_vote_token_count[_uid] + self.balanceOf[from_address]
 
     # winning condition
     # sum of yes votes' stake > supply/2
-    if self.yes_vote_token_count > self.totalSupply/2 and self.proposal_list[_uid].concluded == False:
+    if self.yes_vote_token_count[_uid] > self.totalSupply/2 and self.proposal_list[_uid].concluded == False:
         send(self.proposal_list[_uid].proposer, self.proposal_list[_uid].eth)
+        # so a vote can't be cast after a proposal has been decided
         self.proposal_list[_uid].concluded = True 
 
 

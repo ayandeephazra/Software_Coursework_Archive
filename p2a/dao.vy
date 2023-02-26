@@ -16,17 +16,30 @@ balanceOf: public(HashMap[address, uint256])
 allowance: public(HashMap[address, HashMap[address, uint256]])
 totalSupply: public(uint256)
 
-# TODO add state that tracks proposals here
-struct prop:
-    eth: uint256
-    vote: uint256
-    proposer: address
+# own storage variables
+num_stakeholders: uint256
+yes_vote_token_count: uint256
 
-proposal_List: HashMap[uint256, HashMap[address, prop]]
+# own constants
+NOT_VOTED: constant(uint256) = 0
+VOTED: constant(uint256) = 1
+
+# TODO add state that tracks proposals here
+struct proposal:
+    eth: uint256
+    proposer: address
+    concluded: bool
+    voters: DynArray[address, 10]
+    num_votes: uint256
+    
+proposal_list: HashMap[uint256, proposal]
+stake_list: HashMap[address, uint256]
+voted_list: HashMap[address, HashMap[uint256, uint256]]
 
 @external
 def __init__():
     self.totalSupply = 0
+    self.num_stakeholders = 0
 
 @external
 @payable
@@ -40,6 +53,12 @@ def buyToken():
     # change total supply and account balance
     self.totalSupply = self.totalSupply + value
     self.balanceOf[from_address] = self.balanceOf[from_address] + value
+
+    if self.stake_list[msg.sender] == 0:
+        self.num_stakeholders = self.num_stakeholders + 1
+        self.stake_list[msg.sender] = 1
+    elif self.stake_list[msg.sender] == 1:
+        pass
     pass
 
 @external
@@ -62,6 +81,19 @@ def sellToken(_value: uint256):
 @nonreentrant("lock")
 def createProposal(_uid: uint256, _recipient: address, _amount: uint256):
     # TODO implement
+
+    if _amount == 0:
+        raise "amount is 0, cannot create proposal with no reward"
+ 
+    if self.proposal_list[_uid].eth == 0:
+        self.proposal_list[_uid].eth = _amount
+        self.proposal_list[_uid].proposer = _recipient
+        self.proposal_list[_uid].num_votes = 0
+        self.yes_vote_token_count = 0
+        self.proposal_list[_uid].concluded = False
+    else:
+        raise "_uid already in use by another proposal"
+
     pass
 
 @external
@@ -69,7 +101,29 @@ def createProposal(_uid: uint256, _recipient: address, _amount: uint256):
 @nonreentrant("lock")
 def approveProposal(_uid: uint256):
     # TODO implement
-    pass
+
+    # checking if no stake condition
+    if self.balanceOf[msg.sender] == 0:
+        raise "Exception: Has no stake in Token"
+
+    # checking if certain address voted for proposal referred to by _uid
+    if self.voted_list[msg.sender][_uid] == VOTED:
+        raise "Exception: Already voted, cannot recast vote"
+
+    log Approval(self.proposal_list[_uid].proposer, msg.sender, self.proposal_list[_uid].eth)
+    # determines if proposal passes or not
+    self.proposal_list[_uid].num_votes += 1 
+    # address's vote is counted so it is marked as VOTED
+    self.voted_list[msg.sender][_uid] = VOTED 
+    # sum of yes votes' token share
+    self.yes_vote_token_count = self.yes_vote_token_count + self.balanceOf[msg.sender]
+
+    # winning condition
+    # sum of yes votes' stake > supply/2
+    if self.yes_vote_token_count > self.totalSupply/2 and self.proposal_list[_uid].concluded == False:
+        send(self.proposal_list[_uid].proposer, self.proposal_list[_uid].eth)
+        self.proposal_list[_uid].concluded = True 
+
 
 # ERC.vy code 
 # code below borrowed in full from https://github.com/vyperlang/vyper/blob/master/examples/tokens/ERC20.vy

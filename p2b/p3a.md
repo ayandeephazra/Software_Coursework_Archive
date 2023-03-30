@@ -1,6 +1,9 @@
 ## Overview
 In this assignment, we will expand the implementation of a simple account-based blockchain system.
 
+### Updates:
+ - You are supposed to create a State::history() method as well. Check post 79 on Piazza. 
+
 ### A consortium setting
 ### Background
 In class, we have looked at systems that use Nakomoto consensus using Proof of Work. This is one of the primary

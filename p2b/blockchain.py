@@ -47,7 +47,7 @@ class Block(object):
     def _hash(self):
         return hashlib.sha256(
             str(self.number).encode('utf-8') +
-            str(self.transactions).encode('utf-8') +
+            str([str(txn) for txn in self.transactions]).encode('utf-8') +
             str(self.previous_hash).encode('utf-8') +
             str(self.miner).encode('utf-8')
         ).hexdigest()
@@ -87,6 +87,18 @@ class State(object):
     def apply_block(self, block):
         # TODO: apply the block to the state.
         logging.info("Block (#%s) applied to state. %d transactions applied" % (block.hash, len(block.transactions)))
+        
+    def history(self, account):
+        # TODO: return a list of (blockNumber, value changes) that this account went through 
+        # Here is an example
+
+        blockNumber = 3
+        amount = 200
+
+        blockNumber2 = 10
+        amount2 = -25
+
+        return [(blockNumber, amount), (blockNumber2, amount2)]
 
 class Blockchain(object):
     def __init__(self):
@@ -139,6 +151,9 @@ class Blockchain(object):
              
         # TODO: make changes to in-memory data structures to reflect the new block. Check Blockchain.__init__ method for in-memory datastructures
         self.chain.append(block)
+        if genesis:
+            pass
+            # TODO: at time of genesis, change state to have 'A': 10000 (person A has 10000)
 
         logging.info("[MINER] constructed new block with %d transactions. Informing others about: #%s" % (len(block.transactions), block.hash[:5]))
         # broadcast the new block to all nodes.
@@ -150,5 +165,4 @@ class Blockchain(object):
         """ Add this transaction to the transaction mempool. We will try
         to include this transaction in the next block until it succeeds.
         """
-        # TODO: check that transaction is unique.
         self.current_transactions.append(Transaction(sender, recipient, amount))

@@ -1,0 +1,15 @@
+syscall.h - HEADER at the bottom 22
+
+defs.h - function header below // proc.c
+
+user.h - function header below // proc.c
+
+sysproc.c - /// sys_*SYSCALLNAME* (retType) { return *SYSCALLNAME* ; } /// at the bottom with the other syscalls
+
+usys.S - SYSCALL(*SYSCALLNAME*)
+
+syscall.c - 1) extern int sys_*SYSCALLNAME*(retType);
+            2) at the bottom with the large static int function re	t in the format [SYS_*SYSCALLNAME*] sys_*syscallname*,
+
+proc.c - after procdump() add the ACTUAL FUNCTION DEFINITON 
+return the syscallnumber which is 22 for the first programmer defined syscall

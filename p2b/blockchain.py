@@ -69,11 +69,19 @@ class State(object):
     def __init__(self):
         # TODO: You might want to think how you will store balance per person.
         # You don't need to worry about persisting to disk. Storing in memory is fine.
+
+        # dict() to store account and balance of a person
+        self.person_balance = {}
+
         pass
 
     def encode(self):
         dumped = {}
         # TODO: Add all person -> balance pairs into `dumped`.
+
+        for person in self.person_balance:
+            dumped.update({person: self.person_balance[person]})
+
         return dumped
 
     def validate_txns(self, txns):
@@ -81,6 +89,16 @@ class State(object):
         # TODO: returns a list of valid transactions.
         # You receive a list of transactions, and you try applying them to the state.
         # If a transaction can be applied, add it to result. (should be included)
+
+        for txn in txns:
+            sender = txn.sender
+            receiver = txn.receiver
+            amount = txn.amount
+
+            if self.person_balance[sender] >= amount:
+                self.person_balance[sender] -+ amount
+                result.append(txn)
+            pass
         
         return result
 

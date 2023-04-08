@@ -104,6 +104,10 @@ class State(object):
 
     def apply_block(self, block):
         # TODO: apply the block to the state.
+        for i in len(block.transactions):
+            pass
+
+    
         logging.info("Block (#%s) applied to state. %d transactions applied" % (block.hash, len(block.transactions)))
         
     def history(self, account):
@@ -170,8 +174,10 @@ class Blockchain(object):
         # TODO: make changes to in-memory data structures to reflect the new block. Check Blockchain.__init__ method for in-memory datastructures
         self.chain.append(block)
         if genesis:
-            pass
+            #pass
+            self.state.person_balance.update({'A': 10000})
             # TODO: at time of genesis, change state to have 'A': 10000 (person A has 10000)
+
 
         logging.info("[MINER] constructed new block with %d transactions. Informing others about: #%s" % (len(block.transactions), block.hash[:5]))
         # broadcast the new block to all nodes.

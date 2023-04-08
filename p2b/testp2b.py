@@ -201,6 +201,7 @@ class Test1ChainTests(unittest.TestCase):
         TestsUtils.checkStateEqualForAll(self, *[d['state'] for d in dumps])
         TestsUtils.checkChainEqualForAll(self, *[d['chain'] for d in dumps])
         one = dumps[0]
+
         self.assertTrue(one['state'] == {'A': 10000})
         self.assertTrue(len(one['chain']) == 1)
         TestsUtils.checkBlockBasic(self, one['chain'][0], 1, server_ports[0], '0xfeedcafe')

@@ -8,6 +8,9 @@ app = Flask(__name__)
 # Instantiate the Blockchain
 blockchain = bc.Blockchain()
 
+# Global data variables
+
+
 @app.route('/inform/block', methods=['POST'])
 def new_block_received():
     values = request.get_json()
@@ -30,6 +33,9 @@ def new_block_received():
     # Modify any other in-memory data structures to reflect the new block
 
     # TODO: if I am responsible for next block, start mining it (trigger_new_block_mine).
+
+    if (blockchain.node_identifier == (block.number + 1)%len(blockchain.nodes)):
+        blockchain.trigger_new_block_mine(blockchain, False)
 
     return "OK", 201
 

@@ -1,0 +1,38 @@
+    /*
+     * System.out .println("testStackConstructorIsEmptyPushPeek(): " +
+     * testStackConstructorIsEmptyPushPeek()); System.out.println("testStackPop(): " +
+     * testStackPop()); System.out.println("testInboxReadMessage(): " + testInboxReadMessage());
+     * System.out.println("testInboxReceiveMessage(): " + testInboxReceiveMessage());
+     * System.out.println("testInboxMarkAllMessagesAsRead(): " + testInboxMarkAllMessagesAsRead());
+     */
+     
+     
+         /*
+    
+    return "Unread" + "(" + unreadMessageBox.size() + ")" + "\n" + formattedString;
+    String formattedString = "";
+    Iterator<Message> iter = readMessageBox.iterator();
+    formattedString = formattedString + ("Read(" + readMessageBox.size() + ")\n");
+
+    while (iter.hasNext()) {
+      // temp object is necessary as get methods will call different instances otherwise
+      Message tempObj = iter.next();
+      formattedString = formattedString + tempObj.getID() + " " + tempObj.getSUBJECT() + "\n";
+    }
+
+    return formattedString;
+    */
+    
+    /*
+    String formattedString = "";
+    Iterator<Message> iter = unreadMessageBox.iterator();
+    formattedString = formattedString+ ("Unread(" + unreadMessageBox.size() + ")\n");
+
+    while (iter.hasNext()) {
+      // temp object is necessary as get methods will call different instances otherwise
+      Message tempObj = iter.next();
+      formattedString = formattedString + tempObj.getID() + " " + tempObj.getSUBJECT() + "\n";
+    }
+
+    return formattedString;
+    */

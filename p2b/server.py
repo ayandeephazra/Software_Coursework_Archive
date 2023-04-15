@@ -30,11 +30,15 @@ def new_block_received():
         return 'Invalid block', 400
 
     blockchain.chain.append(block)    # Add the block to the chain
+    
     # Modify any other in-memory data structures to reflect the new block
+    blockchain.state.apply_block(block)
 
     # TODO: if I am responsible for next block, start mining it (trigger_new_block_mine).
 
-    if (blockchain.node_identifier == (block.number + 1)%len(blockchain.nodes)):
+    # blockchain.chain[len(blockchain.nodes - 1)].miner
+
+    if (blockchain.node_identifier == (values['number'] + 1)%len(blockchain.nodes)):
         blockchain.trigger_new_block_mine(blockchain, False)
 
     return "OK", 201

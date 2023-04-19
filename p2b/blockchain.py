@@ -75,6 +75,10 @@ class State(object):
         self.person_history = {}
         pass
 
+    # updates k-v store of person and balances
+    def update_p_b(self, person, balance):
+        self.person_balance.update({person: balance})
+
     def encode(self):
         dumped = {}
         # TODO: Add all person -> balance pairs into `dumped`.
@@ -91,22 +95,52 @@ class State(object):
         # If a transaction can be applied, add it to result. (should be included)
 
         for txn in txns:
-            temp_txn = Transaction.decode(txn)
+            temp_txn = txn
             sender = temp_txn.sender
             receiver = temp_txn.recipient
             amount = temp_txn.amount
 
-            if self.person_balance[sender] >= amount:
+            if sender not in self.person_balance:
+                continue
+
+            if self.person_balance[sender] < amount:
+                continue
+
+            self.person_balance[sender] = self.person_balance - amount
+
+            if receiver in self.person_balance:
+                self.person_balance[receiver] = self.person_balance[receiver] + amount
+
+            else:
+                self.person_balance[receiver] = amount
+
+            result.append(txn)
+
+            #if self.person_balance[sender] >= amount:
                 #self.person_balance[sender] -+ amount
-                result.append(txn)
-            pass
+                #result.append(txn)
         
         return result
-
+    
     def apply_block(self, block):
+        self.person_history.update(self.person_balance)
+        for txn in block.transactions:
+            sender = txn.sender
+            receiver = txn.recipient
+            amount = txn.amount
+            self.person_balance[sender] = self.person_balance[sender] - amount
+            if receiver in self.person_balance:
+                self.person_balance[receiver] = self.person_balance + amount
+            else:
+                self.person_balance.update({receiver: amount})
+        
+        logging.info("Block (#%s) applied to state. %d transactions applied" % (block.hash, len(block.transactions)))
+
+
+    def apply_block__(self, block):
         # TODO: apply the block to the state.
 
-        temp_block = Block.decode(block)
+        temp_block = block # Block.decode(
 
         # results array
         results = self.validate_txns(temp_block.transactions)
@@ -116,11 +150,11 @@ class State(object):
             temp_txn = Transaction.decode(txn)
 
             # new to state initialize to 0
-            if temp_txn.sender not in self.person_balance:
+            if temp_txn.sender not in self.person_balance.keys():
                 self.person_balance.update({temp_txn.sender: 0})
 
             # new to state initialize to 0
-            if temp_txn.recipient not in self.person_balance:
+            if temp_txn.recipient not in self.person_balance.keys():
                 self.person_balance.update({temp_txn.recipient: 0})
 
             # remove amount from sender
@@ -129,14 +163,15 @@ class State(object):
             self.person_balance[temp_txn.recipient] = self.person_balance[temp_txn.recipient] + temp_txn.amount
 
             # new to state initialize to 0
-            if temp_txn.sender not in self.person_history:
-                self.person_history.update({temp_txn.sender: {}})
+            if temp_txn.sender not in self.person_history.keys():
+                inner_dict_s = {}
+                self.person_history.update({temp_txn.sender: inner_dict_s})
 
             # new to state initialize to 0
-            if temp_txn.recipient not in self.person_history:
-                self.person_history.update({temp_txn.recipient: {}})
+            if temp_txn.recipient not in self.person_history.keys():
+                inner_dict_r = {}
+                self.person_history.update({temp_txn.recipient: inner_dict_r})
             
-            #self.person_history[temp_txn.recipient].append("f")
             # history update, if account exists, then add or subtract new amt to the total
             # depending on if recipient or sender
             # else make a new entry in the list
@@ -167,8 +202,15 @@ class State(object):
 
         # [(blockNumber, amount), (blockNumber2, amount2)]
 
-        for k in self.person_history[account]:
-            result.append([k,  self.person_history[account][k]])
+        num = 0
+        while num < len(self.person_history) and account not in self.person_history:
+            num = num + 1
+
+        if num < len(self.person_history):
+            pass
+
+        #for k in self.person_history[account]:
+        #    result.append([k,  self.person_history[account][k]])
 
         return result
 
@@ -182,6 +224,11 @@ class Blockchain(object):
         self.current_transactions = [] # A list of `Transaction`
         self.chain = [] # A list of `Block`
         self.state = State()
+    
+    def next_to_mine(self, curr_miner):
+        for node in self.nodes:
+            if curr_miner == node:
+                return self.nodes[(self.nodes.index(node) + 1)%len(self.nodes)] # - len(self.nodes) 
 
     def is_new_block_valid(self, block, received_blockhash):
         """
@@ -237,7 +284,7 @@ class Blockchain(object):
             self.current_transactions.sort()
 
             # TODO: create a new *valid* block with available transactions. Replace the arguments in the line below.
-            prev_block = Block.decode(self.chain[-1])
+            prev_block = self.chain[-1] # Block.decode(
             block = Block(len(self.chain), self.current_transactions, prev_block.hash, miner)
             # []
              
@@ -247,6 +294,7 @@ class Blockchain(object):
             #pass
             # TODO: at time of genesis, change state to have 'A': 10000 (person A has 10000)
             self.state.person_balance.update({'A': 10000})
+            self.state.person_history.update({'A': [[1, 10000]]})
         else:
             self.state.apply_block(block)
 

@@ -32,14 +32,15 @@ def new_block_received():
     blockchain.chain.append(block)    # Add the block to the chain
     
     # Modify any other in-memory data structures to reflect the new block
-    blockchain.state.apply_block(block)
+    if block.number == 1:
+        blockchain.state.update_p_b('A', 10000)
+    else:
+        blockchain.state.apply_block(block)
 
     # TODO: if I am responsible for next block, start mining it (trigger_new_block_mine).
-
-    # blockchain.chain[len(blockchain.nodes - 1)].miner
-
-    if (blockchain.node_identifier == (values['number'] + 1)%len(blockchain.nodes)):
-        blockchain.trigger_new_block_mine(blockchain, False)
+    if (blockchain.node_identifier == blockchain.next_to_mine(block.miner) ):
+        # blockchain.chain[len(blockchain.nodes - 1)].miner
+        blockchain.trigger_new_block_mine() #blockchain, False (values['number'] + 1)%len(blockchain.nodes)
 
     return "OK", 201
 

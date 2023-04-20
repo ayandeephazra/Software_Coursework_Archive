@@ -207,6 +207,14 @@ class State(object):
             num = num + 1
 
         if num < len(self.person_history):
+            indx = 1
+            result.append([num+1, self.person_history[indx][account]])
+            num = num + 1
+            while num < len(self.person_balance):
+                if account in self.person_balance[num]:
+                    change = self.person_balance[num][account] - self.person_balance[num-1][account]
+                    if change != 0:
+                        result.append([num+1, change])
             pass
 
         #for k in self.person_history[account]:
@@ -280,25 +288,27 @@ class Blockchain(object):
 
         if genesis:
             block = Block(1, [], '0xfeedcafe', miner)
+            self.state.person_balance.update({'A': 10000})
+            self.state.person_history.update({'A': [[1, 10000]]})
         else:
             self.current_transactions.sort()
 
             # TODO: create a new *valid* block with available transactions. Replace the arguments in the line below.
             prev_block = self.chain[-1] # Block.decode(
-            block = Block(len(self.chain), self.current_transactions, prev_block.hash, miner)
+            block = Block(len(self.chain), self.state.validate_txns(self.current_transactions), prev_block.hash, miner)
             # []
+            self.state.apply_block(block)
+            self.chain.append(block)
              
         # TODO: make changes to in-memory data structures to reflect the new block. Check Blockchain.__init__ method for in-memory datastructures
         
         if genesis:
-            #pass
+            pass
             # TODO: at time of genesis, change state to have 'A': 10000 (person A has 10000)
-            self.state.person_balance.update({'A': 10000})
-            self.state.person_history.update({'A': [[1, 10000]]})
+            #self.state.person_balance.update({'A': 10000})
+            #self.state.person_history.update({'A': [[1, 10000]]})
         else:
-            self.state.apply_block(block)
-
-        self.chain.append(block)
+            pass
         
 
         logging.info("[MINER] constructed new block with %d transactions. Informing others about: #%s" % (len(block.transactions), block.hash[:5]))

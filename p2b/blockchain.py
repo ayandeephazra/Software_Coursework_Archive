@@ -70,21 +70,27 @@ class State(object):
         # TODO: You might want to think how you will store balance per person.
         # You don't need to worry about persisting to disk. Storing in memory is fine.
 
+        # list storing each block by index, each block has k->v mappings of the state at the end of that block
+        self.lst = []
         # dict() to store account and balance of a person
         self.person_balance = {}
         self.person_history = {}
+    
         pass
 
-    # updates k-v store of person and balances
+    # updates k-v store of person and balances for genesis block only
     def update_p_b(self, person, balance):
-        self.person_balance.update({person: balance})
+        self.lst.append({person: balance})
+        #self.person_balance.update({person: balance})
 
     def encode(self):
         dumped = {}
         # TODO: Add all person -> balance pairs into `dumped`.
 
-        for person in self.person_balance:
-            dumped.update({person: self.person_balance[person]})
+        # most recent state
+        if len(self.lst) > 0:
+            for person in self.lst[-1]:
+                dumped.update({person: self.lst[-1][person]})
 
         return dumped
 
@@ -93,6 +99,10 @@ class State(object):
         # TODO: returns a list of valid transactions.
         # You receive a list of transactions, and you try applying them to the state.
         # If a transaction can be applied, add it to result. (should be included)
+
+        self.person_balance = {}
+        if len(self.lst) > 0:
+            self.person_balance.update(dict(self.lst[-1]))
 
         for txn in txns:
             temp_txn = txn
@@ -106,7 +116,7 @@ class State(object):
             if self.person_balance[sender] < amount:
                 continue
 
-            self.person_balance[sender] = self.person_balance - amount
+            self.person_balance[sender] = self.person_balance[sender] - amount
 
             if receiver in self.person_balance:
                 self.person_balance[receiver] = self.person_balance[receiver] + amount
@@ -123,16 +133,18 @@ class State(object):
         return result
     
     def apply_block(self, block):
-        self.person_history.update(self.person_balance)
+        self.lst.append(dict(self.lst[-1]))
+        #self.person_history = {}
+        #self.person_history.update(self.person_balance)
         for txn in block.transactions:
             sender = txn.sender
             receiver = txn.recipient
             amount = txn.amount
-            self.person_balance[sender] = self.person_balance[sender] - amount
-            if receiver in self.person_balance:
-                self.person_balance[receiver] = self.person_balance + amount
+            self.lst[-1][sender] = self.lst[-1][sender] - amount
+            if receiver in self.lst[-1]:
+                self.lst[-1][receiver] = self.lst[-1][receiver] + amount
             else:
-                self.person_balance.update({receiver: amount})
+                self.lst[-1].update({receiver: amount})
         
         logging.info("Block (#%s) applied to state. %d transactions applied" % (block.hash, len(block.transactions)))
 
@@ -203,22 +215,20 @@ class State(object):
         # [(blockNumber, amount), (blockNumber2, amount2)]
 
         num = 0
-        while num < len(self.person_history) and account not in self.person_history:
+        while num < len(self.lst) and account not in self.lst[num]:
             num = num + 1
 
-        if num < len(self.person_history):
+        if num < len(self.lst):
+            f = 1
             indx = 1
-            result.append([num+1, self.person_history[indx][account]])
+            result.append([num+1, self.lst[f][account]])
             num = num + 1
-            while num < len(self.person_balance):
-                if account in self.person_balance[num]:
-                    change = self.person_balance[num][account] - self.person_balance[num-1][account]
+            while num < len(self.lst):
+                if account in self.lst[num]:
+                    change = self.lst[num][account] - self.lst[num-1][account]
                     if change != 0:
                         result.append([num+1, change])
             pass
-
-        #for k in self.person_history[account]:
-        #    result.append([k,  self.person_history[account][k]])
 
         return result
 
@@ -232,11 +242,14 @@ class Blockchain(object):
         self.current_transactions = [] # A list of `Transaction`
         self.chain = [] # A list of `Block`
         self.state = State()
+
+        # own structures
+        self.pending_transactions = []
     
     def next_to_mine(self, curr_miner):
-        for node in self.nodes:
-            if curr_miner == node:
-                return self.nodes[(self.nodes.index(node) + 1)%len(self.nodes)] # - len(self.nodes) 
+        #for node in self.nodes:
+        #    if curr_miner == node:
+        return self.nodes[(self.nodes.index(curr_miner) + 1)%len(self.nodes)] # - len(self.nodes) 
 
     def is_new_block_valid(self, block, received_blockhash):
         """
@@ -254,22 +267,47 @@ class Blockchain(object):
         # 5. miner should be correct (next RR)
 
         # curr block usable instance
-        temp_block = Block.decode(block)
+        temp_block = block
+
+        # impossible as genesis is block number 1
+        if temp_block.number <= 0:
+            return False
         
         if temp_block._hash() != received_blockhash:
             return False
         
+        # if genesis, then exit after checking basic truths
+        if temp_block.number == 1:
+            # hardcoded value
+            if temp_block.previous_hash != '0xfeedcafe':
+                return False
+            # round robin intiial
+            if temp_block.miner != self.nodes[0]:
+                return False
+            # gen block has no txns
+            if len(temp_block.transactions) != 0:
+                return False
+            return True
+        
+        
         # prev block usable instance
-        prev_block = Block.decode(self.chain[len(self.chain)-1])
+        prev_block = self.chain[-1]
 
         if temp_block.previous_hash != prev_block.hash:
             return False
         
+        temp = self.state.validate_txns(temp_block.transactions)
         for txn in temp_block.transactions:
             self.current_transactions.append(txn)
 
-        if prev_block.number != temp_block.number - 1:
+        if prev_block.number + 1 != temp_block.number:
             return False
+
+        # (self.node_identifier + 1)%len(self.nodes):
+        #if (temp_block.miner) != self.next_to_mine(prev_block):
+        #    return False    
+        
+        #self.state.apply_block(block)
         return True
 
     def trigger_new_block_mine(self, genesis=False):
@@ -288,17 +326,21 @@ class Blockchain(object):
 
         if genesis:
             block = Block(1, [], '0xfeedcafe', miner)
-            self.state.person_balance.update({'A': 10000})
-            self.state.person_history.update({'A': [[1, 10000]]})
+            self.state.lst.append(dict({'A': 10000}))
+            self.chain.append(block)
         else:
             self.current_transactions.sort()
 
             # TODO: create a new *valid* block with available transactions. Replace the arguments in the line below.
             prev_block = self.chain[-1] # Block.decode(
-            block = Block(len(self.chain), self.state.validate_txns(self.current_transactions), prev_block.hash, miner)
-            # []
+            valid_txns = self.state.validate_txns(self.current_transactions)
+            block = Block(prev_block.number + 1, valid_txns, prev_block.hash, miner)
+
             self.state.apply_block(block)
             self.chain.append(block)
+            for txn in valid_txns:
+                if txn in self.current_transactions:
+                    self.current_transactions.remove(txn)
              
         # TODO: make changes to in-memory data structures to reflect the new block. Check Blockchain.__init__ method for in-memory datastructures
         

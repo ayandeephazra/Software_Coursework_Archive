@@ -79,7 +79,8 @@ class ServerProcess:
                 '-n']
             args.extend([str(x) for x in server_ports])
 
-            process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            process = subprocess.Popen(args) 
+                                       # stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) ,   stderr=subprocess.DEVNULL
             pid = process.pid
             with open(self.pid_fname(), 'w') as f:
                 f.write("%d\r\n" % pid)
@@ -647,6 +648,8 @@ class Tests5History(unittest.TestCase):
         self.nodes[0].genesis()
         stagger()
         commit()
+
+        print(self.nodes[0].history('A'))
 
         self.assertTrue(self.nodes[0].history('A') == [[1, 10000]])
         global POINTS; POINTS += 1

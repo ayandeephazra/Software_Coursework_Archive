@@ -297,8 +297,12 @@ class Blockchain(object):
             return False
         
         temp = self.state.validate_txns(temp_block.transactions)
-        for txn in temp_block.transactions:
-            self.current_transactions.append(txn)
+
+        for txn in temp:
+            if txn not in temp_block.transactions:
+                return False
+        #for txn in temp_block.transactions:
+            #self.current_transactions.append(txn)
 
         if prev_block.number + 1 != temp_block.number:
             return False

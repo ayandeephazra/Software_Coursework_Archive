@@ -247,8 +247,12 @@ class Blockchain(object):
         self.pending_transactions = []
     
     def next_to_mine(self, curr_miner):
-        #for node in self.nodes:
-        #    if curr_miner == node:
+        ret = 0
+        if (self.nodes.index(curr_miner) + 1 > 5003):
+            ret = 5001
+        else:
+            ret = (self.nodes.index(curr_miner) + 1)
+        # self.nodes[(self.nodes.index(curr_miner) + 1)%len(self.nodes)] # - len(self.nodes) 
         return self.nodes[(self.nodes.index(curr_miner) + 1)%len(self.nodes)] # - len(self.nodes) 
 
     def is_new_block_valid(self, block, received_blockhash):
@@ -293,25 +297,26 @@ class Blockchain(object):
         # prev block usable instance
         prev_block = self.chain[-1]
 
+        if temp_block.previous_hash == '0xfeedcafe':
+                return False
+
         if temp_block.previous_hash != prev_block.hash:
             return False
         
         temp = self.state.validate_txns(temp_block.transactions)
 
+        # validated txns are not all present in the block
         for txn in temp:
             if txn not in temp_block.transactions:
                 return False
-        #for txn in temp_block.transactions:
-            #self.current_transactions.append(txn)
 
         if prev_block.number + 1 != temp_block.number:
             return False
 
-        # (self.node_identifier + 1)%len(self.nodes):
+        # (self.node_identifier + 1)%len(self.nodes):  
         #if (temp_block.miner) != self.next_to_mine(prev_block):
         #    return False    
-        
-        #self.state.apply_block(block)
+
         return True
 
     def trigger_new_block_mine(self, genesis=False):

@@ -79,8 +79,7 @@ class ServerProcess:
                 '-n']
             args.extend([str(x) for x in server_ports])
 
-            process = subprocess.Popen(args) 
-                                       # stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) ,   stderr=subprocess.DEVNULL
+            process = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             pid = process.pid
             with open(self.pid_fname(), 'w') as f:
                 f.write("%d\r\n" % pid)
@@ -202,7 +201,6 @@ class Test1ChainTests(unittest.TestCase):
         TestsUtils.checkStateEqualForAll(self, *[d['state'] for d in dumps])
         TestsUtils.checkChainEqualForAll(self, *[d['chain'] for d in dumps])
         one = dumps[0]
-
         self.assertTrue(one['state'] == {'A': 10000})
         self.assertTrue(len(one['chain']) == 1)
         TestsUtils.checkBlockBasic(self, one['chain'][0], 1, server_ports[0], '0xfeedcafe')
@@ -648,8 +646,6 @@ class Tests5History(unittest.TestCase):
         self.nodes[0].genesis()
         stagger()
         commit()
-
-        print(self.nodes[0].history('A'))
 
         self.assertTrue(self.nodes[0].history('A') == [[1, 10000]])
         global POINTS; POINTS += 1

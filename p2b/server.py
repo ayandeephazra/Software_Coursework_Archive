@@ -39,9 +39,7 @@ def new_block_received():
 
     # TODO: if I am responsible for next block, start mining it (trigger_new_block_mine).
     if (blockchain.node_identifier == blockchain.next_to_mine(block.miner) ):
-        # blockchain.chain[len(blockchain.nodes - 1)].miner
-        blockchain.trigger_new_block_mine() #blockchain, False (values['number'] + 1)%len(blockchain.nodes)
-
+        blockchain.trigger_new_block_mine()
     return "OK", 201
 
 

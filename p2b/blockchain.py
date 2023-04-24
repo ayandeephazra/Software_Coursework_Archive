@@ -81,7 +81,6 @@ class State(object):
     # updates k-v store of person and balances for genesis block only
     def update_p_b(self, person, balance):
         self.lst.append({person: balance})
-        #self.person_balance.update({person: balance})
 
     def encode(self):
         dumped = {}
@@ -148,7 +147,7 @@ class State(object):
         
         logging.info("Block (#%s) applied to state. %d transactions applied" % (block.hash, len(block.transactions)))
 
-
+    # inefficient 
     def apply_block__(self, block):
         # TODO: apply the block to the state.
 
@@ -214,6 +213,7 @@ class State(object):
 
         # [(blockNumber, amount), (blockNumber2, amount2)]
 
+        # keeps track of block number in iteration
         num = 0
         while num < len(self.lst) and account not in self.lst[num]:
             num = num + 1
@@ -221,10 +221,12 @@ class State(object):
         if num < len(self.lst):
             f = 1
             indx = 1
+            # default change must be recorded
             result.append([num+1, self.lst[f][account]])
             num = num + 1
             while num < len(self.lst):
                 if account in self.lst[num]:
+                    # compare account before and after state and find change
                     change = self.lst[num][account] - self.lst[num-1][account]
                     if change != 0:
                         result.append([num+1, change])
@@ -293,8 +295,7 @@ class Blockchain(object):
                 return False
             return True
         
-        
-        # prev block usable instance
+        # prev block usable instance only if not genesis
         prev_block = self.chain[-1]
 
         if temp_block.previous_hash == '0xfeedcafe':
@@ -333,6 +334,8 @@ class Blockchain(object):
         time.sleep(self.block_mine_time) # Wait for new transactions to come in
         miner = self.node_identifier
 
+        # TODO: make changes to in-memory data structures to reflect the new block. Check Blockchain.__init__ method for in-memory datastructures
+
         if genesis:
             block = Block(1, [], '0xfeedcafe', miner)
             self.state.lst.append(dict({'A': 10000}))
@@ -351,17 +354,7 @@ class Blockchain(object):
                 if txn in self.current_transactions:
                     self.current_transactions.remove(txn)
              
-        # TODO: make changes to in-memory data structures to reflect the new block. Check Blockchain.__init__ method for in-memory datastructures
         
-        if genesis:
-            pass
-            # TODO: at time of genesis, change state to have 'A': 10000 (person A has 10000)
-            #self.state.person_balance.update({'A': 10000})
-            #self.state.person_history.update({'A': [[1, 10000]]})
-        else:
-            pass
-        
-
         logging.info("[MINER] constructed new block with %d transactions. Informing others about: #%s" % (len(block.transactions), block.hash[:5]))
         # broadcast the new block to all nodes.
         for node in self.nodes:

@@ -1,0 +1,2 @@
+ # blockchain.chain[len(blockchain.nodes - 1)].miner
+  #blockchain, False (values['number'] + 1)%len(blockchain.nodes)

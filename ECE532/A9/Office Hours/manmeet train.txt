@@ -1,0 +1,23 @@
+def train(train_ind, sigma, lam=0.5):
+    X_train = X[train_ind]
+    y_train = y[train_ind]
+    
+    n = X_train.shape[0]
+    
+    distsq = np.zeros((n,n), dtype=float)
+    
+    for i in range(n):
+        for j in range(n):
+            d = np.linalg.norm(X_train[i,:]-X_train[j,:])
+            distsq[i,j]=(d**2)
+            
+    K = np.exp(-distsq/(2*sigma**2))
+    
+    alpha = np.linalg.inv(K+lam*np.identity(n))@y_train
+    
+    Yhat = K@alpha
+    Yhat_thresh = np.sign(Yhat)
+    
+    err = np.mean(Yhat_thresh != y_train)
+    
+    return alpha, err
